@@ -1,4 +1,4 @@
-const app = require("../app"); // Import the configured app
+const app = require("./app"); // Import the configured app
 const PORT = process.env.PORT || 8001;
 
 const APP_NAME = process.env.APP_NAME || "DefaultApp"; // Fallback if APP_NAME is undefined

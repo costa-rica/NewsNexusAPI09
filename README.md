@@ -8,7 +8,7 @@ The API for the NewsNexusDb09 and microservices suite of applications.
 npm install
 ```
 
-`npm i dotenv express sequelize sqlite3 bcrypt jsonwebtoken cors`
+`npm i dotenv express sequelize sqlite3 bcrypt jsonwebtoken cors cookie-parser morgan luxon archiver json2csv csv-parser multer unzipper exceljs pdfkit`
 
 ## .env
 

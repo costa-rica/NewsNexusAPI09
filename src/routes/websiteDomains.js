@@ -1,8 +1,8 @@
 var express = require("express");
 var router = express.Router();
 const { WebsiteDomain } = require("newsnexusdb09");
-const { checkBodyReturnMissing } = require("../src/modules/common");
-const { authenticateToken } = require("../src/modules/userAuthentication");
+const { checkBodyReturnMissing } = require("../modules/common");
+const { authenticateToken } = require("../modules/userAuthentication");
 
 // GET /website-domains
 router.get("/", authenticateToken, async (req, res) => {

@@ -1,9 +1,9 @@
 var express = require("express");
 var router = express.Router();
 const { Article, State, ArticleApproved } = require("newsnexusdb09");
-const { authenticateToken } = require("../src/modules/userAuthentication");
-const { getDateOfLastSubmittedReport } = require("../src/modules/reports");
-const { createSpreadsheetFromArray } = require("../src/modules/excelExports");
+const { authenticateToken } = require("../modules/userAuthentication");
+const { getDateOfLastSubmittedReport } = require("../modules/reports");
+const { createSpreadsheetFromArray } = require("../modules/excelExports");
 const path = require("path");
 const fs = require("fs");
 

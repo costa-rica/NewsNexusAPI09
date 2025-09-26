@@ -17,19 +17,19 @@ const {
 	NewsArticleAggregatorSource,
 	EntityWhoCategorizedArticle,
 } = require("newsnexusdb09");
-const { authenticateToken } = require("../src/modules/userAuthentication");
+const { authenticateToken } = require("../modules/userAuthentication");
 const {
 	createArticlesArrayWithSqlForSemanticKeywordsRating,
 	createNewsApiRequestsArray,
 	createArticlesApprovedArray,
-} = require("../src/modules/articles");
+} = require("../modules/articles");
 const {
 	convertDbUtcDateOrStringToEasternString,
 	// getLastThursdayAt20h,
 	getLastThursdayAt20hInNyTimeZone,
-} = require("../src/modules/common");
+} = require("../modules/common");
 const { DateTime } = require("luxon");
-const { createSpreadsheetFromArray } = require("../src/modules/excelExports");
+const { createSpreadsheetFromArray } = require("../modules/excelExports");
 const path = require("path");
 const fs = require("fs");
 const {
@@ -44,7 +44,7 @@ const {
 	sqlQueryArticlesIsRelevant,
 	// sqlQueryArticlesForWithRatingsRouteNoAi,
 	sqlQueryArticlesAndAiScores,
-} = require("../src/modules/queriesSql");
+} = require("../modules/queriesSql");
 
 // router.post("/test", async (req, res) => {
 //   const articlesArrayWithRelevants = await sqlQueryArticlesIsRelevant();

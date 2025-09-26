@@ -8,9 +8,9 @@ const {
 	NewsApiRequestWebsiteDomainContract,
 	WebsiteDomain,
 } = require("newsnexusdb09");
-const { checkBodyReturnMissing } = require("../src/modules/common");
-const { authenticateToken } = require("../src/modules/userAuthentication");
-const { sqlQueryRequestsFromApi } = require("../src/modules/queriesSql");
+const { checkBodyReturnMissing } = require("../modules/common");
+const { authenticateToken } = require("../modules/userAuthentication");
+const { sqlQueryRequestsFromApi } = require("../modules/queriesSql");
 const { DateTime } = require("luxon");
 
 // 🔹 POST /news-aggregators/add-aggregator

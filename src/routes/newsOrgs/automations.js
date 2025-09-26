@@ -1,6 +1,6 @@
 var express = require("express");
 var router = express.Router();
-const { authenticateToken } = require("../../src/modules/userAuthentication");
+const { authenticateToken } = require("../../modules/userAuthentication");
 const fs = require("fs");
 const path = require("path");
 

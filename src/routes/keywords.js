@@ -1,8 +1,8 @@
 var express = require("express");
 var router = express.Router();
 const { Keyword } = require("newsnexusdb09");
-const { checkBodyReturnMissing } = require("../src/modules/common");
-const { authenticateToken } = require("../src/modules/userAuthentication");
+const { checkBodyReturnMissing } = require("../modules/common");
+const { authenticateToken } = require("../modules/userAuthentication");
 
 // 🔹 POST /keywords/add: Add API
 router.post("/add-keyword", authenticateToken, async (req, res) => {

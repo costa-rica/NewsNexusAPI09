@@ -1,8 +1,8 @@
 var express = require("express");
 var router = express.Router();
 const { State, ArticleStateContract } = require("newsnexusdb09");
-const { checkBodyReturnMissing } = require("../src/modules/common");
-const { authenticateToken } = require("../src/modules/userAuthentication");
+const { checkBodyReturnMissing } = require("../modules/common");
+const { authenticateToken } = require("../modules/userAuthentication");
 
 // 🔹 GET /states: Get API
 router.get("/", async (req, res) => {

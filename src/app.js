@@ -1,5 +1,5 @@
 require("dotenv").config();
-const { sequelize } = require("newsnexusdb09");
+const { initModels, sequelize } = require("newsnexusdb09");
 var express = require("express");
 var path = require("path");
 var cookieParser = require("cookie-parser");
@@ -56,10 +56,12 @@ app.use("/artificial-intelligence", artificialIntelligenceRouter);
 app.use("/news-data-io", newsDataIoRouter);
 app.use("/analysis", analysisRouter);
 
+initModels();
+
 const {
 	onStartUpCreateEnvUsers,
 	verifyCheckDirectoryExists,
-} = require("./src/modules/onStartUp");
+} = require("./modules/onStartUp");
 // Sync database and start server
 sequelize
 	.sync()

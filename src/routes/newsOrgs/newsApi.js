@@ -1,14 +1,14 @@
 var express = require("express");
 var router = express.Router();
 
-const { checkBodyReturnMissing } = require("../../src/modules/common");
+const { checkBodyReturnMissing } = require("../../modules/common");
 const { NewsArticleAggregatorSource, Keyword } = require("newsnexusdb09");
 const {
 	makeNewsApiRequest,
 	storeNewsApiArticles,
 	makeNewsApiRequestDetailed,
 	// makeNewsApiRequestDetailed02,
-} = require("../../src/modules/newsOrgs/requestsNewsApi");
+} = require("../../modules/newsOrgs/requestsNewsApi");
 
 // 🔹 POST news-api/request
 router.post("/request", async (req, res) => {

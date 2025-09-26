@@ -1,12 +1,12 @@
 var express = require("express");
 var router = express.Router();
 
-const { checkBodyReturnMissing } = require("../../src/modules/common");
+const { checkBodyReturnMissing } = require("../../modules/common");
 const { NewsArticleAggregatorSource } = require("newsnexusdb09");
 const {
 	storeNewsDataIoArticles,
 	makeNewsDataIoRequest,
-} = require("../../src/modules/newsOrgs/requestsNewsDataIo");
+} = require("../../modules/newsOrgs/requestsNewsDataIo");
 
 // parameters for NewsDataIo
 // country: `country=us`

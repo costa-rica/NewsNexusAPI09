@@ -11,7 +11,7 @@ const {
 	ArticleReportContract,
 	ArticleReviewed,
 	ArticleApproved,
-	ArticleDuplicate,
+	ArticleDuplicateAnalysis,
 	NewsApiRequest,
 	ArticleContent,
 	NewsRssRequest,
@@ -37,7 +37,7 @@ const models = {
 	ArticleReportContract,
 	ArticleReviewed,
 	ArticleApproved,
-	ArticleDuplicate,
+	ArticleDuplicateAnalysis,
 	NewsApiRequest,
 	ArticleContent,
 	NewsRssRequest,
@@ -59,12 +59,12 @@ const archiver = require("archiver");
 const { Parser } = require("json2csv");
 // Promisify fs functions
 const mkdirAsync = promisify(fs.mkdir);
-const { authenticateToken } = require("../src/modules/userAuthentication");
+const { authenticateToken } = require("../modules/userAuthentication");
 const unlinkAsync = promisify(fs.unlink);
 const {
 	readAndAppendDbTables,
 	createDatabaseBackupZipFile,
-} = require("../src/modules/adminDb");
+} = require("../modules/adminDb");
 
 // upload data to database
 const multer = require("multer");

@@ -3,8 +3,8 @@ var router = express.Router();
 const { User, EntityWhoFoundArticle } = require("newsnexusdb09");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
-const { checkBodyReturnMissing } = require("../src/modules/common");
-const { authenticateToken } = require("../src/modules/userAuthentication");
+const { checkBodyReturnMissing } = require("../modules/common");
+const { authenticateToken } = require("../modules/userAuthentication");
 
 /* GET users listing. */
 router.get("/", function (req, res, next) {

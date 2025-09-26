@@ -6,10 +6,10 @@ const {
 	Article,
 	ArticleApproved,
 } = require("newsnexusdb09");
-const { authenticateToken } = require("../src/modules/userAuthentication");
+const { authenticateToken } = require("../modules/userAuthentication");
 const {
 	createFilteredArticlesArray,
-} = require("../src/modules/artificialIntelligence");
+} = require("../modules/artificialIntelligence");
 
 // 🔹 POST /artificial-intelligence/add-entity
 router.post("/add-entity", authenticateToken, async (req, res) => {

@@ -4,8 +4,8 @@ const {
 	makeGNewsRequest,
 	storeGNewsArticles,
 	makeGNewsApiRequestDetailed,
-} = require("../../src/modules/newsOrgs/requestsGNews");
-const { checkBodyReturnMissing } = require("../../src/modules/common");
+} = require("../../modules/newsOrgs/requestsGNews");
+const { checkBodyReturnMissing } = require("../../modules/common");
 const { NewsArticleAggregatorSource } = require("newsnexusdb09");
 
 // POST /gnews/request

@@ -20,6 +20,7 @@ var automationsRouter = require("./routes/newsOrgs/automations");
 var artificialIntelligenceRouter = require("./routes/artificialIntelligence");
 var newsDataIoRouter = require("./routes/newsOrgs/newsDataIo");
 var analysisRouter = require("./routes/analysis");
+var deduperRouter = require("./routes/deduper");
 
 var app = express();
 const cors = require("cors");
@@ -55,6 +56,7 @@ app.use("/automations", automationsRouter);
 app.use("/artificial-intelligence", artificialIntelligenceRouter);
 app.use("/news-data-io", newsDataIoRouter);
 app.use("/analysis", analysisRouter);
+app.use("/deduper", deduperRouter);
 
 initModels();
 

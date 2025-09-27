@@ -58,6 +58,7 @@ function verifyCheckDirectoryExists() {
 		process.env.PATH_PROJECT_RESOURCES_REPORTS,
 		process.env.PATH_TO_UTILITIES_ANALYSIS_SPREADSHEETS,
 		process.env.PATH_TO_AUTOMATION_EXCEL_FILES,
+		process.env.PATH_TO_UTILITIES_DEDUPER,
 	];
 
 	pathsToCheck.forEach((dirPath) => {

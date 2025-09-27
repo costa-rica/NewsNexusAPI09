@@ -13,7 +13,7 @@ Article collecting and analysis of news articles from various sources. The Consu
 - Database: NewsNexusDb09 (TypeScript)
 - SQLite, Sequelize
 - API: NewsNexusApi09 (JavaScript)
-- Web App: NewsNexusWeb09 (JavaScript)
+- Web App: NewsNexus08Portal (JavaScript)
 
 ### Collection Tools
 

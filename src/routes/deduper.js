@@ -5,7 +5,10 @@ const {
 	ArticleDuplicateAnalysis,
 } = require("newsnexusdb09");
 const { authenticateToken } = require("../modules/userAuthentication");
-const { makeArticleApprovedsTableDictionary, createDeduperAnalysis } = require("../modules/deduper");
+const {
+	makeArticleApprovedsTableDictionary,
+	createDeduperAnalysis,
+} = require("../modules/deduper");
 
 // 🔹 POST /deduper/report-checker-table
 router.post("/report-checker-table", authenticateToken, async (req, res) => {
@@ -62,7 +65,6 @@ router.post("/report-checker-table", authenticateToken, async (req, res) => {
 
 				// Add articleIdApproved to approvedArticlesArray if above threshold
 				if (embeddingSearch >= embeddingThresholdMinimum) {
-					// approvedArticlesArray.push(entry.articleIdApproved);
 					approvedArticlesArray.push({
 						articleIdApproved: entry.articleIdApproved,
 						embeddingSearch: embeddingSearch,
@@ -70,6 +72,11 @@ router.post("/report-checker-table", authenticateToken, async (req, res) => {
 					});
 				}
 			}
+
+			// Sort approvedArticlesArray by embeddingSearch in descending order
+			approvedArticlesArray.sort(
+				(a, b) => b.embeddingSearch - a.embeddingSearch
+			);
 
 			// Build the new structure for this articleId
 			reportArticleDictionary[articleId] = {
@@ -81,7 +88,9 @@ router.post("/report-checker-table", authenticateToken, async (req, res) => {
 
 		// Create the deduper analysis Excel file
 		try {
-			const excelFilePath = await createDeduperAnalysis(reportArticleDictionary);
+			const excelFilePath = await createDeduperAnalysis(
+				reportArticleDictionary
+			);
 			console.log("Deduper analysis Excel file created:", excelFilePath);
 		} catch (error) {
 			console.error("Error creating deduper analysis Excel file:", error);

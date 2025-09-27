@@ -600,4 +600,34 @@ router.get("/recreate/:reportId", authenticateToken, async (req, res) => {
 	});
 });
 
+// // 🔹 POST reports/duplicate-checker-table
+// router.post("/duplicate-checker-table", authenticateToken, async (req, res) => {
+// 	console.log(`- in POST /reports/duplicate-checker-table`);
+// 	const { reportId, embeddingScoreThreshold } = req.body;
+// 	console.log(
+// 		`reportId: ${reportId}, embeddingScoreThreshold: ${embeddingScoreThreshold}`
+// 	);
+
+// 	// get all articles from ArticleReportContract Table
+// 	const articleReportContractsArray = await ArticleReportContract.findAll({
+// 		where: {
+// 			reportId,
+// 		},
+// 	});
+
+// 	// Create dictionary of {articleId: {articleNewInformation: {artilce information}, arrayOfArticleApprovedsPotentiallyDuplicates[{}]}}, called reportArticleDictionary
+// 	// the key value will be articleId from the ArticleReportContract Table we just collected
+// 	// there will be two sub dictionaries: articleNewInformation and arrayOfArticleApprovedsPotentiallyDuplicates
+// 	// articleNewInformation will contain the article information from the ArticleApproved Table
+// 	// arrayOfArticleApprovedsPotentiallyDuplicates will contain the article information from the ArticleApproved Table that are potentially duplicates
+
+// 	// populate the articleNewInformation sub dictionary with article information from the ArticleApproved Table: headlineForPdfReport, textForPdfReport, publicationDateForPdfReport,
+// 	// - we also need to add state, which we will get from the ArticleDuplicateAnalyses Table
+
+// 	// For each article in the reportArticleDictionary using key (articleId) to lookup in the articleIdNew column of the
+// 	// ArticleDuplicateAnalyses Table get the list of corresponding articleIdApproved, articleNewState, ArticleApprovedState, and embeddingSearch values
+// 	// sort each this array of objects by embeddingSearch value in descending order
+// 	// we will use the articleNewState as the value in the
+// });
+
 module.exports = router;

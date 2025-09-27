@@ -158,51 +158,6 @@ async function createArticlesApprovedArray(dateRequestsLimit) {
 	return { requestIdArray, manualFoundCount };
 }
 
-// async function createArticlesApprovedArray(dateRequestsLimit) {
-//   let articlesArray;
-//   if (!dateRequestsLimit) {
-//     articlesArray = await Article.findAll({
-//       include: [
-//         {
-//           model: ArticleApproved,
-//         },
-//       ],
-//     });
-//   } else {
-//     articlesArray = await Article.findAll({
-//       where: {
-//         createdAt: {
-//           [Op.gte]: dateRequestsLimit,
-//         },
-//       },
-//       include: [
-//         {
-//           model: ArticleApproved,
-//         },
-//       ],
-//     });
-//   }
-
-//   const approvedArticlesArray = articlesArray.filter((article) => {
-//     return article.ArticleApproveds && article.ArticleApproveds.length > 0;
-//   });
-
-//   console.log("approvedArticlesArray.length: ", approvedArticlesArray.length);
-
-//   let requestIdArray = [];
-//   let manualFoundCount = 0;
-
-//   approvedArticlesArray.forEach((article) => {
-//     if (article.newsApiRequestId) {
-//       requestIdArray.push(article.newsApiRequestId);
-//     } else {
-//       manualFoundCount++;
-//     }
-//   });
-
-//   return { requestIdArray, manualFoundCount };
-// }
-
 module.exports = {
 	createArticlesArrayWithSqlForSemanticKeywordsRating,
 	createNewsApiRequestsArray,

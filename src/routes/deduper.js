@@ -1,6 +1,9 @@
 var express = require("express");
 var router = express.Router();
-const { ArticleReportContract, ArticleDuplicateAnalysis } = require("newsnexusdb09");
+const {
+	ArticleReportContract,
+	ArticleDuplicateAnalysis,
+} = require("newsnexusdb09");
 const { authenticateToken } = require("../modules/userAuthentication");
 const { makeArticleApprovedsTableDictionary } = require("../modules/deduper");
 
@@ -27,7 +30,9 @@ router.post("/report-checker-table", authenticateToken, async (req, res) => {
 				reportId: reportId,
 			},
 		});
-		console.log(`Step 2 completed: Found ${articleReportContracts.length} contracts`);
+		console.log(
+			`Step 2 completed: Found ${articleReportContracts.length} contracts`
+		);
 
 		// Build the reportArticleDictionary using articleIds from the report
 		const reportArticleDictionary = {};
@@ -37,19 +42,24 @@ router.post("/report-checker-table", authenticateToken, async (req, res) => {
 			console.log(`Step 3: Processing articleId ${articleId}...`);
 
 			// Get the article data from articleApprovedsTableDictionary
-			const newArticleInformation = articleApprovedsTableDictionary[articleId] || null;
+			const newArticleInformation =
+				articleApprovedsTableDictionary[articleId] || null;
 
-			console.log(`Step 4: Querying ArticleDuplicateAnalysis for articleId ${articleId}...`);
+			console.log(
+				`Step 4: Querying ArticleDuplicateAnalysis for articleId ${articleId}...`
+			);
 			// Get all ArticleDuplicateAnalysis entries for this articleId (as articleIdNew)
 			// Exclude self-matches where sameArticleIdFlag = 1
 			const duplicateAnalysisEntries = await ArticleDuplicateAnalysis.findAll({
 				where: {
 					articleIdNew: articleId,
-					sameArticleIdFlag: 0  // Exclude self-matches
+					sameArticleIdFlag: 0, // Exclude self-matches
 				},
-				attributes: ['articleIdApproved', 'embeddingSearch']
+				attributes: ["articleIdApproved", "embeddingSearch"],
 			});
-			console.log(`Step 4 completed: Found ${duplicateAnalysisEntries.length} duplicate analysis entries`);
+			console.log(
+				`Step 4 completed: Found ${duplicateAnalysisEntries.length} duplicate analysis entries`
+			);
 
 			// Calculate maxEmbedding and filter approvedArticlesArray by threshold
 			let maxEmbedding = 0;
@@ -65,7 +75,12 @@ router.post("/report-checker-table", authenticateToken, async (req, res) => {
 
 				// Add articleIdApproved to approvedArticlesArray if above threshold
 				if (embeddingSearch >= embeddingThresholdMinimum) {
-					approvedArticlesArray.push(entry.articleIdApproved);
+					// approvedArticlesArray.push(entry.articleIdApproved);
+					approvedArticlesArray.push({
+						articleIdApproved: entry.articleIdApproved,
+						embeddingSearch: embeddingSearch,
+						...articleApprovedsTableDictionary[entry.articleIdApproved],
+					});
 				}
 			}
 
@@ -73,7 +88,7 @@ router.post("/report-checker-table", authenticateToken, async (req, res) => {
 			reportArticleDictionary[articleId] = {
 				maxEmbedding: maxEmbedding,
 				newArticleInformation: newArticleInformation,
-				approvedArticlesArray: approvedArticlesArray
+				approvedArticlesArray: approvedArticlesArray,
 			};
 		}
 

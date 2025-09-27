@@ -399,3 +399,79 @@ Links NewsAPI requests to website domains for filtering.
 | includedOrExcludedFromRequest | STRING  | DEFAULT "included"          | Include/exclude status      |
 | createdAt                     | DATE    | NOT NULL                    | Timestamp                   |
 | updatedAt                     | DATE    | NOT NULL                    | Timestamp                   |
+
+## Database Relationships
+
+The following relationships are defined in `src/models/_associations.ts` and establish the complete relational structure of the NewsNexusDb09 database:
+
+### Core Entity Relationships
+
+#### User Relationships
+
+- **User → EntityWhoCategorizedArticle** (1:Many): Users can categorize multiple articles
+- **User → EntityWhoFoundArticle** (1:Many): Users can discover multiple articles
+- **User → Report** (1:Many): Users can create multiple reports
+- **User → ArticleReviewed** (1:Many): Users can review multiple articles
+- **User → ArticleApproved** (1:Many): Users can approve multiple articles
+- **User → ArticleIsRelevant** (1:Many): Users can assess relevance of multiple articles
+
+#### Article Core Relationships
+
+- **Article → ArticleStateContract** (1:Many): Articles can be associated with multiple states
+- **Article → ArticleKeywordContract** (1:Many): Articles can have multiple keywords/categorizations
+- **Article → ArticleContent** (1:Many): Articles can have multiple content versions
+- **Article → ArticleReportContract** (1:Many): Articles can appear in multiple reports
+- **Article → ArticleReviewed** (1:Many): Articles can have multiple review records
+- **Article → ArticleApproved** (1:Many): Articles can have multiple approval records
+- **Article → ArticleIsRelevant** (1:Many): Articles can have multiple relevance assessments
+
+#### Article Discovery and Source Tracking
+
+- **EntityWhoFoundArticle → Article** (1:Many): Discovery entities can find multiple articles
+- **NewsApiRequest → Article** (1:Many): API requests can retrieve multiple articles
+- **NewsRssRequest → Article** (1:Many): RSS requests can retrieve multiple articles
+
+### News Source and Aggregation Relationships
+
+#### NewsArticleAggregatorSource Relationships
+
+- **NewsArticleAggregatorSource → EntityWhoFoundArticle** (1:1): Source can have one discovery entity
+- **NewsArticleAggregatorSource → NewsApiRequest** (1:Many): Sources can make multiple API requests
+- **NewsArticleAggregatorSource → NewsRssRequest** (1:Many): Sources can make multiple RSS requests
+- **NewsArticleAggregatorSource → NewsArticleAggregatorSourceStateContract** (1:Many): Sources can be filtered by multiple states
+
+### AI and Categorization Relationships
+
+- **ArtificialIntelligence → EntityWhoCategorizedArticle** (1:Many): AI systems can categorize multiple articles
+- **EntityWhoCategorizedArticle → ArticleKeywordContract** (1:Many): Categorizers can assign multiple keywords
+
+### Many-to-Many Relationships
+
+#### Article ↔ State (through ArticleStateContract)
+
+Articles can be associated with multiple states, and states can have multiple articles.
+
+#### Article ↔ EntityWhoCategorizedArticle (through ArticleEntityWhoCategorizedArticleContract)
+
+Articles can be categorized by multiple entities, and entities can categorize multiple articles. This relationship includes keyword and rating data.
+
+#### NewsApiRequest ↔ WebsiteDomain (through NewsApiRequestWebsiteDomainContract)
+
+API requests can filter multiple website domains, and domains can be used in multiple requests.
+
+#### NewsArticleAggregatorSource ↔ State (through NewsArticleAggregatorSourceStateContract)
+
+News sources can be filtered by multiple states, and states can filter multiple sources.
+
+### Duplicate Analysis Relationships
+
+- **Article → ArticleDuplicateAnalysis** (1:Many as "newArticle"): Articles can be the subject of multiple duplicate analyses
+- **Article → ArticleDuplicateAnalysis** (1:Many as "approvedArticle"): Articles can be compared against in multiple duplicate analyses
+
+### Contract/Junction Table Details
+
+- **ArticleStateContract**: Links articles to US states with timestamps
+- **ArticleReportContract**: Links articles to reports with reference numbers and CPSC acceptance status
+- **ArticleEntityWhoCategorizedArticleContract**: Links articles to categorizers with keyword and rating data (unique index on articleId, entityWhoCategorizesId, keyword)
+- **NewsApiRequestWebsiteDomainContract**: Links API requests to website domains with include/exclude status
+- **NewsArticleAggregatorSourceStateContract**: Links news sources to states for geographic filtering

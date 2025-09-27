@@ -5,7 +5,7 @@ const {
 	ArticleDuplicateAnalysis,
 } = require("newsnexusdb09");
 const { authenticateToken } = require("../modules/userAuthentication");
-const { makeArticleApprovedsTableDictionary } = require("../modules/deduper");
+const { makeArticleApprovedsTableDictionary, createDeduperAnalysis } = require("../modules/deduper");
 
 // 🔹 POST /deduper/report-checker-table
 router.post("/report-checker-table", authenticateToken, async (req, res) => {
@@ -17,37 +17,27 @@ router.post("/report-checker-table", authenticateToken, async (req, res) => {
 			`reportId: ${reportId}, embeddingThresholdMinimum: ${embeddingThresholdMinimum}`
 		);
 
-		console.log("Step 1: Getting articleApprovedsTableDictionary...");
 		// Get the articleApprovedsTableDictionary
 		const articleApprovedsTableDictionary =
 			await makeArticleApprovedsTableDictionary();
-		console.log("Step 1 completed successfully");
 
-		console.log("Step 2: Getting articleReportContracts...");
 		// Get all articles associated with this report
 		const articleReportContracts = await ArticleReportContract.findAll({
 			where: {
 				reportId: reportId,
 			},
 		});
-		console.log(
-			`Step 2 completed: Found ${articleReportContracts.length} contracts`
-		);
 
 		// Build the reportArticleDictionary using articleIds from the report
 		const reportArticleDictionary = {};
 
 		for (const contract of articleReportContracts) {
 			const articleId = contract.articleId;
-			console.log(`Step 3: Processing articleId ${articleId}...`);
 
 			// Get the article data from articleApprovedsTableDictionary
 			const newArticleInformation =
 				articleApprovedsTableDictionary[articleId] || null;
 
-			console.log(
-				`Step 4: Querying ArticleDuplicateAnalysis for articleId ${articleId}...`
-			);
 			// Get all ArticleDuplicateAnalysis entries for this articleId (as articleIdNew)
 			// Exclude self-matches where sameArticleIdFlag = 1
 			const duplicateAnalysisEntries = await ArticleDuplicateAnalysis.findAll({
@@ -57,9 +47,6 @@ router.post("/report-checker-table", authenticateToken, async (req, res) => {
 				},
 				attributes: ["articleIdApproved", "embeddingSearch"],
 			});
-			console.log(
-				`Step 4 completed: Found ${duplicateAnalysisEntries.length} duplicate analysis entries`
-			);
 
 			// Calculate maxEmbedding and filter approvedArticlesArray by threshold
 			let maxEmbedding = 0;
@@ -90,6 +77,15 @@ router.post("/report-checker-table", authenticateToken, async (req, res) => {
 				newArticleInformation: newArticleInformation,
 				approvedArticlesArray: approvedArticlesArray,
 			};
+		}
+
+		// Create the deduper analysis Excel file
+		try {
+			const excelFilePath = await createDeduperAnalysis(reportArticleDictionary);
+			console.log("Deduper analysis Excel file created:", excelFilePath);
+		} catch (error) {
+			console.error("Error creating deduper analysis Excel file:", error);
+			// Don't fail the main request if Excel creation fails
 		}
 
 		res.json({

@@ -5,6 +5,8 @@ const {
 	ArticleStateContract,
 	State,
 } = require("newsnexusdb09");
+const ExcelJS = require("exceljs");
+const path = require("path");
 
 /**
  * Creates a dictionary of article data from the ArticleApproveds table
@@ -67,6 +69,112 @@ async function makeArticleApprovedsTableDictionary() {
 	}
 }
 
+/**
+ * Creates an Excel spreadsheet analysis of the reportArticleDictionary
+ * @param {Object} reportArticleDictionary - The report article dictionary from the deduper route
+ * @returns {string} Path to the created Excel file
+ */
+async function createDeduperAnalysis(reportArticleDictionary) {
+	try {
+		if (!reportArticleDictionary || Object.keys(reportArticleDictionary).length === 0) {
+			throw new Error("reportArticleDictionary is empty or undefined.");
+		}
+
+		// Create workbook and worksheet
+		const workbook = new ExcelJS.Workbook();
+		const worksheet = workbook.addWorksheet("Deduper Analysis");
+
+		// Define column headers
+		const headers = [
+			"Id",
+			"articleIdNew",
+			"ArticleIdApproved",
+			"embeddingSearch",
+			"headlineForPdfReport",
+			"publicationNameForPdfReport",
+			"publicationDateForPdfReport",
+			"textForPdfReport",
+			"urlForPdfReport",
+			"state"
+		];
+
+		// Add headers to worksheet
+		worksheet.addRow(headers);
+
+		let rowId = 1;
+
+		// Sort entries by maxEmbedding in descending order
+		const sortedEntries = Object.entries(reportArticleDictionary).sort((a, b) => {
+			const maxEmbeddingA = a[1].maxEmbedding || 0;
+			const maxEmbeddingB = b[1].maxEmbedding || 0;
+			return maxEmbeddingB - maxEmbeddingA; // Descending order
+		});
+
+		// Process each articleId in sorted order
+		for (const [articleIdNew, data] of sortedEntries) {
+			const { newArticleInformation, approvedArticlesArray } = data;
+
+			// Skip if approvedArticlesArray is empty
+			if (!approvedArticlesArray || approvedArticlesArray.length === 0) {
+				continue;
+			}
+
+			// First row: new article information
+			if (newArticleInformation) {
+				const newArticleRow = [
+					rowId++,
+					articleIdNew,
+					articleIdNew, // ArticleIdApproved equals articleIdNew for the first row
+					1, // embeddingSearch = 1 for the new article
+					newArticleInformation.headlineForPdfReport || "",
+					newArticleInformation.publicationNameForPdfReport || "",
+					newArticleInformation.publicationDateForPdfReport || "",
+					newArticleInformation.textForPdfReport || "",
+					newArticleInformation.urlForPdfReport || "",
+					newArticleInformation.state || ""
+				];
+				worksheet.addRow(newArticleRow);
+			}
+
+			// Subsequent rows: approved articles array
+			for (const approvedArticle of approvedArticlesArray) {
+				const approvedRow = [
+					rowId++,
+					articleIdNew,
+					approvedArticle.articleIdApproved,
+					approvedArticle.embeddingSearch || 0,
+					approvedArticle.headlineForPdfReport || "",
+					approvedArticle.publicationNameForPdfReport || "",
+					approvedArticle.publicationDateForPdfReport || "",
+					approvedArticle.textForPdfReport || "",
+					approvedArticle.urlForPdfReport || "",
+					approvedArticle.state || ""
+				];
+				worksheet.addRow(approvedRow);
+			}
+		}
+
+		// Get output directory from environment variable
+		const outputDir = process.env.PATH_TO_UTILITIES_ANALYSIS_SPREADSHEETS;
+		if (!outputDir) {
+			throw new Error("Environment variable PATH_TO_UTILITIES_ANALYSIS_SPREADSHEETS is not set");
+		}
+
+		// Create output file path
+		const outputFilePath = path.join(outputDir, "deduper_analysis.xlsx");
+
+		// Save the Excel file
+		await workbook.xlsx.writeFile(outputFilePath);
+		console.log("✅ Deduper analysis Excel file saved to:", outputFilePath);
+
+		return outputFilePath;
+	} catch (error) {
+		console.error('Error in createDeduperAnalysis:', error);
+		throw error;
+	}
+}
+
 module.exports = {
-	makeArticleApprovedsTableDictionary
+	makeArticleApprovedsTableDictionary,
+	createDeduperAnalysis
 };

@@ -166,50 +166,50 @@ US geographic states for filtering.
 
 Client report generation and tracking.
 
-| Field                   | Type    | Constraints                 | Description                      |
-| ----------------------- | ------- | --------------------------- | -------------------------------- |
-| id                      | INTEGER | PRIMARY KEY, AUTO_INCREMENT | Unique report identifier         |
-| dateSubmittedToClient   | DATE    | NULLABLE                    | Client submission date           |
-| nameCrFormat            | STRING  | NULLABLE                    | CR format name                   |
-| nameZipFile             | STRING  | NULLABLE                    | Generated ZIP filename           |
-| userId                  | INTEGER | FK, NOT NULL                | User who created report          |
-| createdAt               | DATE    | NOT NULL                    | Timestamp                        |
-| updatedAt               | DATE    | NOT NULL                    | Timestamp                        |
+| Field                 | Type    | Constraints                 | Description              |
+| --------------------- | ------- | --------------------------- | ------------------------ |
+| id                    | INTEGER | PRIMARY KEY, AUTO_INCREMENT | Unique report identifier |
+| dateSubmittedToClient | DATE    | NULLABLE                    | Client submission date   |
+| nameCrFormat          | STRING  | NULLABLE                    | CR format name           |
+| nameZipFile           | STRING  | NULLABLE                    | Generated ZIP filename   |
+| userId                | INTEGER | FK, NOT NULL                | User who created report  |
+| createdAt             | DATE    | NOT NULL                    | Timestamp                |
+| updatedAt             | DATE    | NOT NULL                    | Timestamp                |
 
 #### WebsiteDomains
 
 Website domains for news source filtering.
 
-| Field                  | Type    | Constraints                 | Description                      |
-| ---------------------- | ------- | --------------------------- | -------------------------------- |
-| id                     | INTEGER | PRIMARY KEY, AUTO_INCREMENT | Unique domain identifier         |
-| name                   | STRING  | NOT NULL                    | Domain name                      |
-| isArchived             | BOOLEAN | DEFAULT false               | Archive status flag              |
-| isArchievedNewsDataIo  | BOOLEAN | DEFAULT false               | NewsData.io archive status       |
-| createdAt              | DATE    | NOT NULL                    | Timestamp                        |
-| updatedAt              | DATE    | NOT NULL                    | Timestamp                        |
+| Field                 | Type    | Constraints                 | Description                |
+| --------------------- | ------- | --------------------------- | -------------------------- |
+| id                    | INTEGER | PRIMARY KEY, AUTO_INCREMENT | Unique domain identifier   |
+| name                  | STRING  | NOT NULL                    | Domain name                |
+| isArchived            | BOOLEAN | DEFAULT false               | Archive status flag        |
+| isArchievedNewsDataIo | BOOLEAN | DEFAULT false               | NewsData.io archive status |
+| createdAt             | DATE    | NOT NULL                    | Timestamp                  |
+| updatedAt             | DATE    | NOT NULL                    | Timestamp                  |
 
 #### NewsApiRequests
 
 API request tracking for news aggregation services.
 
-| Field                              | Type     | Constraints                 | Description                           |
-| ---------------------------------- | -------- | --------------------------- | ------------------------------------- |
-| id                                 | INTEGER  | PRIMARY KEY, AUTO_INCREMENT | Unique request identifier             |
-| newsArticleAggregatorSourceId      | INTEGER  | FK, NOT NULL                | Reference to aggregator source        |
-| countOfArticlesReceivedFromRequest | INTEGER  | NULLABLE                    | Articles received count               |
-| countOfArticlesSavedToDbFromRequest| INTEGER  | NULLABLE                    | Articles saved to database count      |
-| countOfArticlesAvailableFromRequest| INTEGER  | NULLABLE                    | Articles available count              |
-| dateStartOfRequest                 | DATEONLY | NULLABLE                    | Request start date                    |
-| dateEndOfRequest                   | DATEONLY | NULLABLE                    | Request end date                      |
-| status                             | STRING   | NULLABLE                    | Request status                        |
-| url                                | STRING   | NULLABLE                    | API request URL                       |
-| andString                          | STRING   | NULLABLE                    | AND search parameters                 |
-| orString                           | STRING   | NULLABLE                    | OR search parameters                  |
-| notString                          | STRING   | NULLABLE                    | NOT search parameters                 |
-| isFromAutomation                   | BOOLEAN  | DEFAULT false               | Automated request flag                |
-| createdAt                          | DATE     | NOT NULL                    | Timestamp                             |
-| updatedAt                          | DATE     | NOT NULL                    | Timestamp                             |
+| Field                               | Type     | Constraints                 | Description                      |
+| ----------------------------------- | -------- | --------------------------- | -------------------------------- |
+| id                                  | INTEGER  | PRIMARY KEY, AUTO_INCREMENT | Unique request identifier        |
+| newsArticleAggregatorSourceId       | INTEGER  | FK, NOT NULL                | Reference to aggregator source   |
+| countOfArticlesReceivedFromRequest  | INTEGER  | NULLABLE                    | Articles received count          |
+| countOfArticlesSavedToDbFromRequest | INTEGER  | NULLABLE                    | Articles saved to database count |
+| countOfArticlesAvailableFromRequest | INTEGER  | NULLABLE                    | Articles available count         |
+| dateStartOfRequest                  | DATEONLY | NULLABLE                    | Request start date               |
+| dateEndOfRequest                    | DATEONLY | NULLABLE                    | Request end date                 |
+| status                              | STRING   | NULLABLE                    | Request status                   |
+| url                                 | STRING   | NULLABLE                    | API request URL                  |
+| andString                           | STRING   | NULLABLE                    | AND search parameters            |
+| orString                            | STRING   | NULLABLE                    | OR search parameters             |
+| notString                           | STRING   | NULLABLE                    | NOT search parameters            |
+| isFromAutomation                    | BOOLEAN  | DEFAULT false               | Automated request flag           |
+| createdAt                           | DATE     | NOT NULL                    | Timestamp                        |
+| updatedAt                           | DATE     | NOT NULL                    | Timestamp                        |
 
 #### ArticleContent
 
@@ -227,101 +227,120 @@ Full text content storage for articles.
 
 Article approval workflow tracking.
 
-| Field                           | Type     | Constraints                 | Description                      |
-| ------------------------------- | -------- | --------------------------- | -------------------------------- |
-| id                              | INTEGER  | PRIMARY KEY, AUTO_INCREMENT | Unique approval identifier       |
-| userId                          | INTEGER  | FK, NOT NULL                | User who approved                |
-| articleId                       | INTEGER  | FK, NOT NULL                | Reference to article             |
-| isApproved                      | BOOLEAN  | DEFAULT true                | Approval status                  |
-| headlineForPdfReport            | STRING   | NULLABLE                    | PDF report headline              |
-| publicationNameForPdfReport     | STRING   | NULLABLE                    | PDF report publication name      |
-| publicationDateForPdfReport     | DATEONLY | NULLABLE                    | PDF report publication date      |
-| textForPdfReport                | STRING   | NULLABLE                    | PDF report text content          |
-| urlForPdfReport                 | STRING   | NULLABLE                    | PDF report URL                   |
-| kmNotes                         | STRING   | NULLABLE                    | Knowledge manager notes          |
-| createdAt                       | DATE     | NOT NULL                    | Timestamp                        |
-| updatedAt                       | DATE     | NOT NULL                    | Timestamp                        |
+| Field                       | Type     | Constraints                 | Description                 |
+| --------------------------- | -------- | --------------------------- | --------------------------- |
+| id                          | INTEGER  | PRIMARY KEY, AUTO_INCREMENT | Unique approval identifier  |
+| userId                      | INTEGER  | FK, NOT NULL                | User who approved           |
+| articleId                   | INTEGER  | FK, NOT NULL                | Reference to article        |
+| isApproved                  | BOOLEAN  | DEFAULT true                | Approval status             |
+| headlineForPdfReport        | STRING   | NULLABLE                    | PDF report headline         |
+| publicationNameForPdfReport | STRING   | NULLABLE                    | PDF report publication name |
+| publicationDateForPdfReport | DATEONLY | NULLABLE                    | PDF report publication date |
+| textForPdfReport            | STRING   | NULLABLE                    | PDF report text content     |
+| urlForPdfReport             | STRING   | NULLABLE                    | PDF report URL              |
+| kmNotes                     | STRING   | NULLABLE                    | Knowledge manager notes     |
+| createdAt                   | DATE     | NOT NULL                    | Timestamp                   |
+| updatedAt                   | DATE     | NOT NULL                    | Timestamp                   |
+
+#### ArticleDuplicateAnalysis
+
+Tracks deduplication comparison outputs between a newly ingested article and an already approved article.
+
+| Field                | Type    | Constraints                 | Description                                          |
+| -------------------- | ------- | --------------------------- | ---------------------------------------------------- |
+| id                   | INTEGER | PRIMARY KEY, AUTO_INCREMENT | Unique analysis identifier                           |
+| articleIdNew         | INTEGER | FK, NOT NULL                | ID of the newly ingested article                     |
+| articleIdApproved    | INTEGER | FK, NOT NULL                | ID of the previously approved article                |
+| sameArticleIdFlag    | INTEGER | NOT NULL                    | 1 if IDs match; 0 otherwise                          |
+| articleNewState      | STRING  | NOT NULL                    | State associated with the new article                |
+| articleApprovedState | STRING  | NOT NULL                    | State associated with the approved article           |
+| sameStateFlag        | INTEGER | NOT NULL                    | 1 if states match; 0 otherwise                       |
+| urlCheck             | INTEGER | NOT NULL                    | URL match check result (e.g., 1 match / 0 no match)  |
+| contentHash          | INTEGER | NOT NULL                    | Hash comparison result indicator for article content |
+| embeddingSearch      | INTEGER | NOT NULL                    | Embedding similarity result indicator                |
+| createdAt            | DATE    | NOT NULL                    | Timestamp                                            |
+| updatedAt            | DATE    | NOT NULL                    | Timestamp                                            |
 
 #### ArticleReviewed
 
 Article review workflow tracking.
 
-| Field      | Type    | Constraints                 | Description                |
-| ---------- | ------- | --------------------------- | -------------------------- |
-| id         | INTEGER | PRIMARY KEY, AUTO_INCREMENT | Unique review identifier   |
-| userId     | INTEGER | FK, NOT NULL                | User who reviewed          |
-| articleId  | INTEGER | FK, NOT NULL                | Reference to article       |
-| isReviewed | BOOLEAN | DEFAULT true                | Review status              |
-| kmNotes    | STRING  | NULLABLE                    | Knowledge manager notes    |
-| createdAt  | DATE    | NOT NULL                    | Timestamp                  |
-| updatedAt  | DATE    | NOT NULL                    | Timestamp                  |
+| Field      | Type    | Constraints                 | Description              |
+| ---------- | ------- | --------------------------- | ------------------------ |
+| id         | INTEGER | PRIMARY KEY, AUTO_INCREMENT | Unique review identifier |
+| userId     | INTEGER | FK, NOT NULL                | User who reviewed        |
+| articleId  | INTEGER | FK, NOT NULL                | Reference to article     |
+| isReviewed | BOOLEAN | DEFAULT true                | Review status            |
+| kmNotes    | STRING  | NULLABLE                    | Knowledge manager notes  |
+| createdAt  | DATE    | NOT NULL                    | Timestamp                |
+| updatedAt  | DATE    | NOT NULL                    | Timestamp                |
 
 #### ArticleIsRelevant
 
 Article relevance assessment tracking.
 
-| Field       | Type    | Constraints                 | Description                   |
-| ----------- | ------- | --------------------------- | ----------------------------- |
-| id          | INTEGER | PRIMARY KEY, AUTO_INCREMENT | Unique relevance identifier   |
-| userId      | INTEGER | FK, NOT NULL                | User who assessed             |
-| articleId   | INTEGER | FK, NOT NULL                | Reference to article          |
-| isRelevant  | BOOLEAN | DEFAULT true                | Relevance status              |
-| kmNotes     | STRING  | NULLABLE                    | Knowledge manager notes       |
-| createdAt   | DATE    | NOT NULL                    | Timestamp                     |
-| updatedAt   | DATE    | NOT NULL                    | Timestamp                     |
+| Field      | Type    | Constraints                 | Description                 |
+| ---------- | ------- | --------------------------- | --------------------------- |
+| id         | INTEGER | PRIMARY KEY, AUTO_INCREMENT | Unique relevance identifier |
+| userId     | INTEGER | FK, NOT NULL                | User who assessed           |
+| articleId  | INTEGER | FK, NOT NULL                | Reference to article        |
+| isRelevant | BOOLEAN | DEFAULT true                | Relevance status            |
+| kmNotes    | STRING  | NULLABLE                    | Knowledge manager notes     |
+| createdAt  | DATE    | NOT NULL                    | Timestamp                   |
+| updatedAt  | DATE    | NOT NULL                    | Timestamp                   |
 
 #### EntityWhoFoundArticle
 
 Tracking entities that discover articles.
 
-| Field                          | Type    | Constraints                 | Description                        |
-| ------------------------------ | ------- | --------------------------- | ---------------------------------- |
-| id                             | INTEGER | PRIMARY KEY, AUTO_INCREMENT | Unique entity identifier           |
-| userId                         | INTEGER | FK, NULLABLE                | User who found article             |
-| newsArticleAggregatorSourceId  | INTEGER | FK, NULLABLE                | Aggregator source that found       |
-| createdAt                      | DATE    | NOT NULL                    | Timestamp                          |
-| updatedAt                      | DATE    | NOT NULL                    | Timestamp                          |
+| Field                         | Type    | Constraints                 | Description                  |
+| ----------------------------- | ------- | --------------------------- | ---------------------------- |
+| id                            | INTEGER | PRIMARY KEY, AUTO_INCREMENT | Unique entity identifier     |
+| userId                        | INTEGER | FK, NULLABLE                | User who found article       |
+| newsArticleAggregatorSourceId | INTEGER | FK, NULLABLE                | Aggregator source that found |
+| createdAt                     | DATE    | NOT NULL                    | Timestamp                    |
+| updatedAt                     | DATE    | NOT NULL                    | Timestamp                    |
 
 #### EntityWhoCategorizedArticle
 
 Tracking entities that categorize articles.
 
-| Field                   | Type    | Constraints                 | Description                    |
-| ----------------------- | ------- | --------------------------- | ------------------------------ |
-| id                      | INTEGER | PRIMARY KEY, AUTO_INCREMENT | Unique entity identifier       |
-| userId                  | INTEGER | FK, NULLABLE                | User who categorized           |
-| artificialIntelligenceId| INTEGER | FK, NULLABLE                | AI system that categorized     |
-| createdAt               | DATE    | NOT NULL                    | Timestamp                      |
-| updatedAt               | DATE    | NOT NULL                    | Timestamp                      |
+| Field                    | Type    | Constraints                 | Description                |
+| ------------------------ | ------- | --------------------------- | -------------------------- |
+| id                       | INTEGER | PRIMARY KEY, AUTO_INCREMENT | Unique entity identifier   |
+| userId                   | INTEGER | FK, NULLABLE                | User who categorized       |
+| artificialIntelligenceId | INTEGER | FK, NULLABLE                | AI system that categorized |
+| createdAt                | DATE    | NOT NULL                    | Timestamp                  |
+| updatedAt                | DATE    | NOT NULL                    | Timestamp                  |
 
 #### ArtificialIntelligence
 
 AI models and systems configuration.
 
-| Field                 | Type    | Constraints                 | Description                    |
-| --------------------- | ------- | --------------------------- | ------------------------------ |
-| id                    | INTEGER | PRIMARY KEY, AUTO_INCREMENT | Unique AI system identifier    |
-| name                  | STRING  | NOT NULL                    | AI system name                 |
-| description           | STRING  | NULLABLE                    | AI system description          |
-| huggingFaceModelName  | STRING  | NULLABLE                    | HuggingFace model name         |
-| huggingFaceModelType  | STRING  | NULLABLE                    | HuggingFace model type         |
-| createdAt             | DATE    | NOT NULL                    | Timestamp                      |
-| updatedAt             | DATE    | NOT NULL                    | Timestamp                      |
+| Field                | Type    | Constraints                 | Description                 |
+| -------------------- | ------- | --------------------------- | --------------------------- |
+| id                   | INTEGER | PRIMARY KEY, AUTO_INCREMENT | Unique AI system identifier |
+| name                 | STRING  | NOT NULL                    | AI system name              |
+| description          | STRING  | NULLABLE                    | AI system description       |
+| huggingFaceModelName | STRING  | NULLABLE                    | HuggingFace model name      |
+| huggingFaceModelType | STRING  | NULLABLE                    | HuggingFace model type      |
+| createdAt            | DATE    | NOT NULL                    | Timestamp                   |
+| updatedAt            | DATE    | NOT NULL                    | Timestamp                   |
 
 #### NewsArticleAggregatorSource
 
 News source and aggregator configuration.
 
-| Field     | Type    | Constraints                 | Description                    |
-| --------- | ------- | --------------------------- | ------------------------------ |
-| id        | INTEGER | PRIMARY KEY, AUTO_INCREMENT | Unique source identifier       |
-| nameOfOrg | STRING  | NULLABLE                    | Organization name              |
-| url       | STRING  | NULLABLE                    | Source URL                     |
-| apiKey    | STRING  | NULLABLE                    | API access key                 |
-| isApi     | BOOLEAN | DEFAULT false               | API source flag                |
-| isRss     | BOOLEAN | DEFAULT false               | RSS source flag                |
-| createdAt | DATE    | NOT NULL                    | Timestamp                      |
-| updatedAt | DATE    | NOT NULL                    | Timestamp                      |
+| Field     | Type    | Constraints                 | Description              |
+| --------- | ------- | --------------------------- | ------------------------ |
+| id        | INTEGER | PRIMARY KEY, AUTO_INCREMENT | Unique source identifier |
+| nameOfOrg | STRING  | NULLABLE                    | Organization name        |
+| url       | STRING  | NULLABLE                    | Source URL               |
+| apiKey    | STRING  | NULLABLE                    | API access key           |
+| isApi     | BOOLEAN | DEFAULT false               | API source flag          |
+| isRss     | BOOLEAN | DEFAULT false               | RSS source flag          |
+| createdAt | DATE    | NOT NULL                    | Timestamp                |
+| updatedAt | DATE    | NOT NULL                    | Timestamp                |
 
 ### Contract/Junction Tables
 
@@ -329,54 +348,54 @@ News source and aggregator configuration.
 
 Many-to-many relationship between Articles and States.
 
-| Field     | Type    | Constraints                 | Description           |
-| --------- | ------- | --------------------------- | --------------------- |
-| id        | INTEGER | PRIMARY KEY, AUTO_INCREMENT | Unique contract ID    |
-| articleId | INTEGER | FK, NOT NULL                | Reference to article  |
-| stateId   | INTEGER | FK, NOT NULL                | Reference to state    |
-| createdAt | DATE    | NOT NULL                    | Timestamp             |
-| updatedAt | DATE    | NOT NULL                    | Timestamp             |
+| Field     | Type    | Constraints                 | Description          |
+| --------- | ------- | --------------------------- | -------------------- |
+| id        | INTEGER | PRIMARY KEY, AUTO_INCREMENT | Unique contract ID   |
+| articleId | INTEGER | FK, NOT NULL                | Reference to article |
+| stateId   | INTEGER | FK, NOT NULL                | Reference to state   |
+| createdAt | DATE    | NOT NULL                    | Timestamp            |
+| updatedAt | DATE    | NOT NULL                    | Timestamp            |
 
 #### ArticleReportContract
 
 Many-to-many relationship between Articles and Reports.
 
-| Field                         | Type    | Constraints                 | Description                      |
-| ----------------------------- | ------- | --------------------------- | -------------------------------- |
-| id                            | INTEGER | PRIMARY KEY, AUTO_INCREMENT | Unique contract ID               |
-| reportId                      | INTEGER | FK, NOT NULL                | Reference to report              |
-| articleId                     | INTEGER | FK, NOT NULL                | Reference to article             |
-| articleReferenceNumberInReport| STRING  | NULLABLE                    | Reference number in report       |
-| articleAcceptedByCpsc         | BOOLEAN | DEFAULT true                | CPSC acceptance status           |
-| articleRejectionReason        | STRING  | NULLABLE                    | Reason for rejection             |
-| createdAt                     | DATE    | NOT NULL                    | Timestamp                        |
-| updatedAt                     | DATE    | NOT NULL                    | Timestamp                        |
+| Field                          | Type    | Constraints                 | Description                |
+| ------------------------------ | ------- | --------------------------- | -------------------------- |
+| id                             | INTEGER | PRIMARY KEY, AUTO_INCREMENT | Unique contract ID         |
+| reportId                       | INTEGER | FK, NOT NULL                | Reference to report        |
+| articleId                      | INTEGER | FK, NOT NULL                | Reference to article       |
+| articleReferenceNumberInReport | STRING  | NULLABLE                    | Reference number in report |
+| articleAcceptedByCpsc          | BOOLEAN | DEFAULT true                | CPSC acceptance status     |
+| articleRejectionReason         | STRING  | NULLABLE                    | Reason for rejection       |
+| createdAt                      | DATE    | NOT NULL                    | Timestamp                  |
+| updatedAt                      | DATE    | NOT NULL                    | Timestamp                  |
 
 #### ArticleEntityWhoCategorizedArticleContract
 
 Links articles to categorization entities with keyword data.
 
-| Field                 | Type    | Constraints                                      | Description                    |
-| --------------------- | ------- | ------------------------------------------------ | ------------------------------ |
-| id                    | INTEGER | PRIMARY KEY, AUTO_INCREMENT                      | Unique contract ID             |
-| articleId             | INTEGER | FK, NOT NULL                                     | Reference to article           |
-| entityWhoCategorizesId| INTEGER | FK, NOT NULL                                     | Reference to categorizer       |
-| keyword               | STRING  | NULLABLE                                         | Categorization keyword         |
-| keywordRating         | FLOAT   | NULLABLE                                         | Keyword relevance rating       |
-| createdAt             | DATE    | NOT NULL                                         | Timestamp                      |
-| updatedAt             | DATE    | NOT NULL                                         | Timestamp                      |
+| Field                  | Type    | Constraints                 | Description              |
+| ---------------------- | ------- | --------------------------- | ------------------------ |
+| id                     | INTEGER | PRIMARY KEY, AUTO_INCREMENT | Unique contract ID       |
+| articleId              | INTEGER | FK, NOT NULL                | Reference to article     |
+| entityWhoCategorizesId | INTEGER | FK, NOT NULL                | Reference to categorizer |
+| keyword                | STRING  | NULLABLE                    | Categorization keyword   |
+| keywordRating          | FLOAT   | NULLABLE                    | Keyword relevance rating |
+| createdAt              | DATE    | NOT NULL                    | Timestamp                |
+| updatedAt              | DATE    | NOT NULL                    | Timestamp                |
 
-*Note: Has unique index on (articleId, entityWhoCategorizesId, keyword)*
+_Note: Has unique index on (articleId, entityWhoCategorizesId, keyword)_
 
 #### NewsApiRequestWebsiteDomainContract
 
 Links NewsAPI requests to website domains for filtering.
 
-| Field                         | Type    | Constraints                 | Description                      |
-| ----------------------------- | ------- | --------------------------- | -------------------------------- |
-| id                            | INTEGER | PRIMARY KEY, AUTO_INCREMENT | Unique contract ID               |
-| newsApiRequestId              | INTEGER | FK, NULLABLE                | Reference to API request         |
-| websiteDomainId               | INTEGER | FK, NULLABLE                | Reference to website domain      |
-| includedOrExcludedFromRequest | STRING  | DEFAULT "included"          | Include/exclude status           |
-| createdAt                     | DATE    | NOT NULL                    | Timestamp                        |
-| updatedAt                     | DATE    | NOT NULL                    | Timestamp                        |
+| Field                         | Type    | Constraints                 | Description                 |
+| ----------------------------- | ------- | --------------------------- | --------------------------- |
+| id                            | INTEGER | PRIMARY KEY, AUTO_INCREMENT | Unique contract ID          |
+| newsApiRequestId              | INTEGER | FK, NULLABLE                | Reference to API request    |
+| websiteDomainId               | INTEGER | FK, NULLABLE                | Reference to website domain |
+| includedOrExcludedFromRequest | STRING  | DEFAULT "included"          | Include/exclude status      |
+| createdAt                     | DATE    | NOT NULL                    | Timestamp                   |
+| updatedAt                     | DATE    | NOT NULL                    | Timestamp                   |

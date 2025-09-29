@@ -24,6 +24,7 @@ PATH_TO_API_RESPONSE_JSON_FILES=/home/shared/project_resources/NewsNexus09/api_r
 PATH_TO_AUTOMATION_EXCEL_FILES=/home/shared/project_resources/NewsNexus09/utilities/automation_excel_files
 PATH_TO_UTILITIES_ANALYSIS_SPREADSHEETS=/home/shared/project_resources/NewsNexus09/utilities/analysis_spreadsheets
 PATH_TO_UTILITIES_DEDUPER=/Users/nick/Documents/_project_resources/NewsNexus09/utilities/deduper
+URL_BASE_NEWS_NEXUS_PYTHON_QUEUER=http://127.0.0.1:5000/
 ADMIN_EMAIL_CREATE_ON_STARTUP=["nickrodriguez@kineticmetrics.com"]
 NODE_ENV=production
 AUTHENTIFICATION_TURNED_OFF=false

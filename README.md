@@ -8,7 +8,13 @@ The API for the NewsNexusDb09 and microservices suite of applications.
 npm install
 ```
 
-`npm i dotenv express sequelize sqlite3 bcrypt jsonwebtoken cors cookie-parser morgan luxon archiver json2csv csv-parser multer unzipper exceljs pdfkit`
+`npm i dotenv express sequelize sqlite3 bcrypt jsonwebtoken cors cookie-parser morgan luxon archiver json2csv csv-parser multer unzipper exceljs pdfkit axios`
+
+## Documentation
+
+- [News Nexus 09 Overview](./docs/NEWS_NEXUS_09.md)
+- [Database documentation](./docs/DATABASE_OVERVIEW.md)
+- [API Reference - News Nexus Python Queuer 01](./docs/API_REFERENCE_PYTHON_QUEUER_01.md)
 
 ## .env
 

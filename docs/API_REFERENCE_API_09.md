@@ -31,12 +31,14 @@ This endpoint performs a multi-step analysis to identify duplicate articles:
 1. **Data Collection Phase:**
    - Retrieves all approved articles data via `makeArticleApprovedsTableDictionary()` (src/modules/deduper.js:16)
    - Fetches all articles associated with the report from `ArticleReportContract` table
+   - Builds reference number map from ALL `ArticleReportContract` records, selecting the latest report (highest reportId) for each article
    - Queries `ArticleDuplicateAnalysis` table for similarity scores between report articles and approved articles
 
 2. **Dictionary Construction Phase:**
    - Builds `reportArticleDictionary` with article IDs as root-level keys
    - Each entry contains:
      - `maxEmbedding`: Highest similarity score found for this article
+     - `articleReferenceNumberInReport`: Reference number from ArticleReportContract table
      - `newArticleInformation`: Article data from ArticleApproveds (headline, publication, date, text, URL, state)
      - `approvedArticlesArray`: Array of approved articles that exceed the embedding threshold, sorted by similarity score (descending)
 
@@ -59,6 +61,7 @@ This endpoint performs a multi-step analysis to identify duplicate articles:
   "reportArticleDictionary": {
     "1234": {
       "maxEmbedding": 0.92,
+      "articleReferenceNumberInReport": 5,
       "newArticleInformation": {
         "headlineForPdfReport": "Sample Headline",
         "publicationNameForPdfReport": "News Source",
@@ -97,14 +100,16 @@ This endpoint performs a multi-step analysis to identify duplicate articles:
 
 The generated spreadsheet (`deduper_analysis.xlsx`) follows this structure:
 
-**Columns:** Id | articleIdNew | ArticleIdApproved | embeddingSearch | headlineForPdfReport | publicationNameForPdfReport | publicationDateForPdfReport | textForPdfReport | urlForPdfReport | state
+**Columns:** Id | articleIdNew | articleReportRefIdNew | ArticleIdApproved | articleReportRefIdApproved | embeddingSearch | headlineForPdfReport | publicationNameForPdfReport | publicationDateForPdfReport | textForPdfReport | urlForPdfReport | state
 
 **Row Organization:**
 - Groups are ordered by `maxEmbedding` (descending)
 - Within each group:
-  - Row 1: New article (where `articleIdNew = ArticleIdApproved`, `embeddingSearch = 1`)
-  - Rows 2+: Approved articles ordered by similarity score (descending)
+  - Row 1: New article (where `articleIdNew = ArticleIdApproved`, `articleReportRefIdNew = articleReportRefIdApproved`, `embeddingSearch = 1`)
+  - Rows 2+: Approved articles ordered by similarity score (descending), with their corresponding reference numbers
 - Only groups with matching approved articles are included (empty groups are skipped)
+- Reference numbers come from the `articleReferenceNumberInReport` field in the `ArticleReportContract` table
+- For articles appearing in multiple reports, the reference number from the latest report (highest reportId) is used
 
 **Environment Variables Required:**
 - `PATH_TO_UTILITIES_ANALYSIS_SPREADSHEETS`: Directory path for saving Excel reports

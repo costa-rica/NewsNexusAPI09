@@ -34,11 +34,27 @@ router.post("/report-checker-table", authenticateToken, async (req, res) => {
 			},
 		});
 
+		// Build a map of articleId to reference number for quick lookup
+		// Query ALL ArticleReportContract records to get reference numbers for all articles
+		const allArticleReportContracts = await ArticleReportContract.findAll({
+			order: [['reportId', 'DESC']], // Order by reportId descending to get latest first
+		});
+
+		// Build map, keeping only the first (latest) reference number for each articleId
+		const articleIdToRefNumberMap = {};
+		for (const contract of allArticleReportContracts) {
+			// Only set if not already set (since we're ordering by reportId DESC, first occurrence is latest)
+			if (!articleIdToRefNumberMap[contract.articleId]) {
+				articleIdToRefNumberMap[contract.articleId] = contract.articleReferenceNumberInReport;
+			}
+		}
+
 		// Build the reportArticleDictionary using articleIds from the report
 		const reportArticleDictionary = {};
 
 		for (const contract of articleReportContracts) {
 			const articleId = contract.articleId;
+			const articleReferenceNumberInReport = contract.articleReferenceNumberInReport;
 
 			// Get the article data from articleApprovedsTableDictionary
 			const newArticleInformation =
@@ -84,6 +100,7 @@ router.post("/report-checker-table", authenticateToken, async (req, res) => {
 			// Build the new structure for this articleId
 			reportArticleDictionary[articleId] = {
 				maxEmbedding: maxEmbedding,
+				articleReferenceNumberInReport: articleReferenceNumberInReport,
 				newArticleInformation: newArticleInformation,
 				approvedArticlesArray: approvedArticlesArray,
 			};
@@ -92,7 +109,8 @@ router.post("/report-checker-table", authenticateToken, async (req, res) => {
 		// Create the deduper analysis Excel file
 		try {
 			const excelFilePath = await createDeduperAnalysis(
-				reportArticleDictionary
+				reportArticleDictionary,
+				articleIdToRefNumberMap
 			);
 			console.log("Deduper analysis Excel file created:", excelFilePath);
 		} catch (error) {

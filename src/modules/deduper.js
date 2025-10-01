@@ -72,9 +72,10 @@ async function makeArticleApprovedsTableDictionary() {
 /**
  * Creates an Excel spreadsheet analysis of the reportArticleDictionary
  * @param {Object} reportArticleDictionary - The report article dictionary from the deduper route
+ * @param {Object} articleIdToRefNumberMap - Map of articleId to articleReferenceNumberInReport
  * @returns {string} Path to the created Excel file
  */
-async function createDeduperAnalysis(reportArticleDictionary) {
+async function createDeduperAnalysis(reportArticleDictionary, articleIdToRefNumberMap) {
 	try {
 		if (!reportArticleDictionary || Object.keys(reportArticleDictionary).length === 0) {
 			throw new Error("reportArticleDictionary is empty or undefined.");
@@ -88,7 +89,9 @@ async function createDeduperAnalysis(reportArticleDictionary) {
 		const headers = [
 			"Id",
 			"articleIdNew",
+			"articleReportRefIdNew",
 			"ArticleIdApproved",
+			"articleReportRefIdApproved",
 			"embeddingSearch",
 			"headlineForPdfReport",
 			"publicationNameForPdfReport",
@@ -112,7 +115,7 @@ async function createDeduperAnalysis(reportArticleDictionary) {
 
 		// Process each articleId in sorted order
 		for (const [articleIdNew, data] of sortedEntries) {
-			const { newArticleInformation, approvedArticlesArray } = data;
+			const { newArticleInformation, approvedArticlesArray, articleReferenceNumberInReport } = data;
 
 			// Skip if approvedArticlesArray is empty
 			if (!approvedArticlesArray || approvedArticlesArray.length === 0) {
@@ -124,7 +127,9 @@ async function createDeduperAnalysis(reportArticleDictionary) {
 				const newArticleRow = [
 					rowId++,
 					articleIdNew,
+					articleReferenceNumberInReport || "",
 					articleIdNew, // ArticleIdApproved equals articleIdNew for the first row
+					articleReferenceNumberInReport || "", // articleReportRefIdApproved equals articleReportRefIdNew for the first row
 					1, // embeddingSearch = 1 for the new article
 					newArticleInformation.headlineForPdfReport || "",
 					newArticleInformation.publicationNameForPdfReport || "",
@@ -141,7 +146,9 @@ async function createDeduperAnalysis(reportArticleDictionary) {
 				const approvedRow = [
 					rowId++,
 					articleIdNew,
+					articleReferenceNumberInReport || "",
 					approvedArticle.articleIdApproved,
+					articleIdToRefNumberMap[approvedArticle.articleIdApproved] || "",
 					approvedArticle.embeddingSearch || 0,
 					approvedArticle.headlineForPdfReport || "",
 					approvedArticle.publicationNameForPdfReport || "",

@@ -16,13 +16,15 @@ Analyzes articles in a report to identify duplicates across all approved article
 ```json
 {
   "reportId": 123,
-  "embeddingThresholdMinimum": 0.85
+  "embeddingThresholdMinimum": 0.85,
+  "spacerRow": true
 }
 ```
 
 **Parameters:**
 - `reportId` (integer, required): The report ID to analyze
 - `embeddingThresholdMinimum` (float, required): Minimum embedding similarity score threshold (0-1) for including approved articles in the analysis
+- `spacerRow` (boolean, optional): When true, inserts an empty row between article groups in the Excel output for improved readability. Defaults to false if not provided
 
 **Logic Overview:**
 
@@ -107,6 +109,7 @@ The generated spreadsheet (`deduper_analysis.xlsx`) follows this structure:
 - Within each group:
   - Row 1: New article (where `articleIdNew = ArticleIdApproved`, `articleReportRefIdNew = articleReportRefIdApproved`, `embeddingSearch = 1`)
   - Rows 2+: Approved articles ordered by similarity score (descending), with their corresponding reference numbers
+- When `spacerRow` is true, an empty row is inserted between groups (but not after the last group) for improved readability
 - Only groups with matching approved articles are included (empty groups are skipped)
 - Reference numbers come from the `articleReferenceNumberInReport` field in the `ArticleReportContract` table
 - For articles appearing in multiple reports, the reference number from the latest report (highest reportId) is used
@@ -121,7 +124,8 @@ curl -X POST http://localhost:8001/deduper/report-checker-table \
   -H "Content-Type: application/json" \
   -d '{
     "reportId": 123,
-    "embeddingThresholdMinimum": 0.85
+    "embeddingThresholdMinimum": 0.85,
+    "spacerRow": true
   }'
 ```
 

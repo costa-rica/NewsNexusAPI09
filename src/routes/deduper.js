@@ -18,9 +18,9 @@ router.post("/report-checker-table", authenticateToken, async (req, res) => {
 	console.log(`- in POST /deduper/report-checker-table`);
 
 	try {
-		const { reportId, embeddingThresholdMinimum } = req.body;
+		const { reportId, embeddingThresholdMinimum, spacerRow } = req.body;
 		console.log(
-			`reportId: ${reportId}, embeddingThresholdMinimum: ${embeddingThresholdMinimum}`
+			`reportId: ${reportId}, embeddingThresholdMinimum: ${embeddingThresholdMinimum}, spacerRow: ${spacerRow}`
 		);
 
 		// Get the articleApprovedsTableDictionary
@@ -110,7 +110,8 @@ router.post("/report-checker-table", authenticateToken, async (req, res) => {
 		try {
 			const excelFilePath = await createDeduperAnalysis(
 				reportArticleDictionary,
-				articleIdToRefNumberMap
+				articleIdToRefNumberMap,
+				spacerRow
 			);
 			console.log("Deduper analysis Excel file created:", excelFilePath);
 		} catch (error) {

@@ -73,9 +73,10 @@ async function makeArticleApprovedsTableDictionary() {
  * Creates an Excel spreadsheet analysis of the reportArticleDictionary
  * @param {Object} reportArticleDictionary - The report article dictionary from the deduper route
  * @param {Object} articleIdToRefNumberMap - Map of articleId to articleReferenceNumberInReport
+ * @param {boolean} spacerRow - Optional. If true, adds an empty row between groups
  * @returns {string} Path to the created Excel file
  */
-async function createDeduperAnalysis(reportArticleDictionary, articleIdToRefNumberMap) {
+async function createDeduperAnalysis(reportArticleDictionary, articleIdToRefNumberMap, spacerRow = false) {
 	try {
 		if (!reportArticleDictionary || Object.keys(reportArticleDictionary).length === 0) {
 			throw new Error("reportArticleDictionary is empty or undefined.");
@@ -114,7 +115,8 @@ async function createDeduperAnalysis(reportArticleDictionary, articleIdToRefNumb
 		});
 
 		// Process each articleId in sorted order
-		for (const [articleIdNew, data] of sortedEntries) {
+		for (let i = 0; i < sortedEntries.length; i++) {
+			const [articleIdNew, data] = sortedEntries[i];
 			const { newArticleInformation, approvedArticlesArray, articleReferenceNumberInReport } = data;
 
 			// Skip if approvedArticlesArray is empty
@@ -158,6 +160,11 @@ async function createDeduperAnalysis(reportArticleDictionary, articleIdToRefNumb
 					approvedArticle.state || ""
 				];
 				worksheet.addRow(approvedRow);
+			}
+
+			// Add spacer row between groups if spacerRow is true and not the last entry
+			if (spacerRow && i < sortedEntries.length - 1) {
+				worksheet.addRow([]);
 			}
 		}
 

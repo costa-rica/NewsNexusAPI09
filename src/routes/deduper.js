@@ -216,4 +216,65 @@ router.get("/request-job/:reportId", authenticateToken, async (req, res) => {
 	}
 });
 
+// 🔹 DELETE /deduper/clear-article-duplicate-analyses-table
+router.delete(
+	"/clear-article-duplicate-analyses-table",
+	authenticateToken,
+	async (req, res) => {
+		console.log(`- in DELETE /deduper/clear-article-duplicate-analyses-table`);
+
+		try {
+			// Get Python Queuer base URL from environment
+			const pythonQueuerBaseUrl = process.env.URL_BASE_NEWS_NEXUS_PYTHON_QUEUER;
+			if (!pythonQueuerBaseUrl) {
+				return res.status(500).json({
+					result: false,
+					message:
+						"URL_BASE_NEWS_NEXUS_PYTHON_QUEUER environment variable not configured",
+				});
+			}
+
+			// Build the URL for the clear-db-table endpoint
+			const clearTableUrl = `${pythonQueuerBaseUrl}deduper/clear-db-table`;
+			console.log(`Sending DELETE request to: ${clearTableUrl}`);
+
+			// Make DELETE request to Python Queuer
+			const response = await axios.delete(clearTableUrl);
+			console.log(
+				`Python Queuer response:`,
+				JSON.stringify(response.data, null, 2)
+			);
+
+			// Return the response from Python Queuer
+			res.json({
+				result: true,
+				message: "Article duplicate analyses table cleared successfully",
+				pythonQueuerResponse: response.data,
+			});
+		} catch (error) {
+			console.error(
+				"Error in DELETE /deduper/clear-article-duplicate-analyses-table:",
+				error
+			);
+
+			// If it's an Axios error with a response, include that information
+			if (error.response) {
+				return res.status(error.response.status || 500).json({
+					result: false,
+					message: "Error clearing table via Python Queuer",
+					error: error.message,
+					pythonQueuerResponse: error.response.data,
+				});
+			}
+
+			// Generic error response
+			res.status(500).json({
+				result: false,
+				message: "Internal server error",
+				error: error.message,
+			});
+		}
+	}
+);
+
 module.exports = router;

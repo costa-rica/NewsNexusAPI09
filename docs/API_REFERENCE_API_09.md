@@ -228,3 +228,103 @@ curl -X GET http://localhost:8001/deduper/request-job/123 \
 - [NewsNexusPythonQueuer Deduper Endpoints](./API_REFERENCE_PYTHON_QUEUER_01.md#deduper-endpoints)
 
 ---
+
+### DELETE /deduper/clear-article-duplicate-analyses-table
+
+Clears the ArticleDuplicateAnalysis table by sending a request to the NewsNexusPythonQueuer service. This operation cancels all running/pending deduper jobs and removes all duplicate analysis data from the database.
+
+**Authentication:** Required (JWT token)
+
+**Description:**
+
+This endpoint acts as a proxy to the NewsNexusPythonQueuer's `DELETE /deduper/clear-db-table` endpoint. It performs the following operations:
+
+1. Validates that the NewsNexusPythonQueuer service is configured
+2. Sends a DELETE request to `{URL_BASE_NEWS_NEXUS_PYTHON_QUEUER}/deduper/clear-db-table`
+3. Returns the response from the Python Queuer service
+
+**IMPORTANT:** This is a destructive operation that:
+- Immediately cancels ALL pending and running deduper jobs
+- Executes the `clear_table -y` command from NewsNexusDeduper02
+- Permanently clears all data from the ArticleDuplicateAnalysis table
+
+For detailed information about the underlying clear operation, see the [NewsNexusPythonQueuer API documentation](./API_REFERENCE_PYTHON_QUEUER_01.md#delete-deduperclear-db-table).
+
+**Response (200 OK):**
+```json
+{
+  "result": true,
+  "message": "Article duplicate analyses table cleared successfully",
+  "pythonQueuerResponse": {
+    "cleared": true,
+    "cancelledJobs": [3, 5, 7],
+    "exitCode": 0,
+    "stdout": "Table cleared successfully...",
+    "stderr": "",
+    "timestamp": "2025-09-28T17:45:30.123Z"
+  }
+}
+```
+
+**Response (500 Internal Server Error - Configuration):**
+```json
+{
+  "result": false,
+  "message": "URL_BASE_NEWS_NEXUS_PYTHON_QUEUER environment variable not configured"
+}
+```
+
+**Response (500 Internal Server Error - Python Queuer Error):**
+```json
+{
+  "result": false,
+  "message": "Error clearing table via Python Queuer",
+  "error": "Error description",
+  "pythonQueuerResponse": {
+    "cleared": false,
+    "cancelledJobs": [3, 5],
+    "exitCode": 1,
+    "stdout": "",
+    "stderr": "Error clearing table...",
+    "error": "Clear table command failed",
+    "timestamp": "2025-09-28T17:45:30.123Z"
+  }
+}
+```
+
+**Response (500 Internal Server Error - Generic):**
+```json
+{
+  "result": false,
+  "message": "Internal server error",
+  "error": "Error description"
+}
+```
+
+**Python Queuer Response Fields:**
+- `cleared`: Boolean indicating if the table was successfully cleared
+- `cancelledJobs`: Array of job IDs that were cancelled before clearing
+- `exitCode`: Exit code from the clear_table command (0 = success)
+- `stdout`: Standard output from the clear_table command
+- `stderr`: Standard error from the clear_table command
+- `timestamp`: ISO 8601 timestamp of when the operation completed
+
+**Environment Variables Required:**
+- `URL_BASE_NEWS_NEXUS_PYTHON_QUEUER`: Base URL of the NewsNexusPythonQueuer service (e.g., "http://localhost:5000/")
+
+**Example:**
+```bash
+curl -X DELETE http://localhost:8001/deduper/clear-article-duplicate-analyses-table \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN"
+```
+
+**Related Documentation:**
+- [NewsNexusPythonQueuer DELETE /deduper/clear-db-table](./API_REFERENCE_PYTHON_QUEUER_01.md#delete-deduperclear-db-table)
+
+**Notes:**
+- This operation runs synchronously through the Python Queuer (not queued)
+- Has a 60-second timeout for safety (enforced by Python Queuer)
+- All active deduper jobs are automatically cancelled before the table is cleared
+- Use with caution - this permanently removes all deduplication analysis data
+
+---

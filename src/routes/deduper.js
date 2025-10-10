@@ -216,6 +216,56 @@ router.get("/request-job/:reportId", authenticateToken, async (req, res) => {
 	}
 });
 
+// 🔹 GET /deduper/job-list-status
+router.get("/job-list-status", authenticateToken, async (req, res) => {
+	console.log(`- in GET /deduper/job-list-status`);
+
+	try {
+		// Get Python Queuer base URL from environment
+		const pythonQueuerBaseUrl = process.env.URL_BASE_NEWS_NEXUS_PYTHON_QUEUER;
+		if (!pythonQueuerBaseUrl) {
+			return res.status(500).json({
+				result: false,
+				message:
+					"URL_BASE_NEWS_NEXUS_PYTHON_QUEUER environment variable not configured",
+			});
+		}
+
+		// Build the URL for the jobs/list endpoint
+		const jobsListUrl = `${pythonQueuerBaseUrl}deduper/jobs/list`;
+		console.log(`Sending GET request to: ${jobsListUrl}`);
+
+		// Make GET request to Python Queuer
+		const response = await axios.get(jobsListUrl);
+		console.log(
+			`Python Queuer response:`,
+			JSON.stringify(response.data, null, 2)
+		);
+
+		// Return the response from Python Queuer
+		res.json(response.data);
+	} catch (error) {
+		console.error("Error in GET /deduper/job-list-status:", error);
+
+		// If it's an Axios error with a response, include that information
+		if (error.response) {
+			return res.status(error.response.status || 500).json({
+				result: false,
+				message: "Error fetching job list from Python Queuer",
+				error: error.message,
+				pythonQueuerResponse: error.response.data,
+			});
+		}
+
+		// Generic error response
+		res.status(500).json({
+			result: false,
+			message: "Internal server error",
+			error: error.message,
+		});
+	}
+});
+
 // 🔹 DELETE /deduper/clear-article-duplicate-analyses-table
 router.delete(
 	"/clear-article-duplicate-analyses-table",

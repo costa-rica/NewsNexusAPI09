@@ -229,6 +229,101 @@ curl -X GET http://localhost:8001/deduper/request-job/123 \
 
 ---
 
+### GET /deduper/job-list-status
+
+Retrieves the status of all deduper jobs by relaying the request to the NewsNexusPythonQueuer service.
+
+**Authentication:** Required (JWT token)
+
+**Description:**
+
+This endpoint acts as a proxy to the NewsNexusPythonQueuer's `GET /deduper/jobs/list` endpoint. It retrieves a list of all deduper jobs with their current status and creation timestamps.
+
+For detailed information about job statuses and the underlying service, see the [NewsNexusPythonQueuer API documentation](./API_REFERENCE_PYTHON_QUEUER_01.md#get-deduperjobslist).
+
+**Process Flow:**
+1. Validates that the NewsNexusPythonQueuer service is configured
+2. Sends a GET request to `{URL_BASE_NEWS_NEXUS_PYTHON_QUEUER}/deduper/jobs/list`
+3. Returns the response from the Python Queuer service
+
+**Response (200 OK):**
+```json
+{
+  "jobs": [
+    {
+      "jobId": 1,
+      "status": "completed",
+      "createdAt": "2025-09-28T17:45:30.123Z"
+    },
+    {
+      "jobId": 2,
+      "status": "running",
+      "createdAt": "2025-09-28T17:50:15.456Z"
+    },
+    {
+      "jobId": 3,
+      "status": "pending",
+      "createdAt": "2025-09-28T17:52:00.789Z"
+    }
+  ]
+}
+```
+
+**Job Status Values:**
+- `pending`: Job created but not yet started
+- `running`: Job is currently executing
+- `completed`: Job finished successfully (exit code 0)
+- `failed`: Job finished with errors (non-zero exit code)
+- `cancelled`: Job was manually terminated
+
+**Response (500 Internal Server Error - Configuration):**
+```json
+{
+  "result": false,
+  "message": "URL_BASE_NEWS_NEXUS_PYTHON_QUEUER environment variable not configured"
+}
+```
+
+**Response (500 Internal Server Error - Python Queuer Error):**
+```json
+{
+  "result": false,
+  "message": "Error fetching job list from Python Queuer",
+  "error": "Error description",
+  "pythonQueuerResponse": {
+    "error": "Details from Python Queuer"
+  }
+}
+```
+
+**Response (500 Internal Server Error - Generic):**
+```json
+{
+  "result": false,
+  "message": "Internal server error",
+  "error": "Error description"
+}
+```
+
+**Environment Variables Required:**
+- `URL_BASE_NEWS_NEXUS_PYTHON_QUEUER`: Base URL of the NewsNexusPythonQueuer service (e.g., "http://localhost:5000/")
+
+**Example:**
+```bash
+curl -X GET http://localhost:8001/deduper/job-list-status \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN"
+```
+
+**Related Documentation:**
+- [NewsNexusPythonQueuer GET /deduper/jobs/list](./API_REFERENCE_PYTHON_QUEUER_01.md#get-deduperjobslist)
+
+**Notes:**
+- Job IDs are sequential integers starting from 1
+- Job IDs reset when the NewsNexusPythonQueuer service restarts
+- The jobs array may be empty if no jobs have been created yet
+
+---
+
 ### DELETE /deduper/clear-article-duplicate-analyses-table
 
 Clears the ArticleDuplicateAnalysis table by sending a request to the NewsNexusPythonQueuer service. This operation cancels all running/pending deduper jobs and removes all duplicate analysis data from the database.

@@ -317,4 +317,45 @@ router.delete(
 	}
 );
 
+// 🔹 GET /deduper/article-duplicate-analyses-status
+router.get(
+	"/article-duplicate-analyses-status",
+	authenticateToken,
+	async (req, res) => {
+		console.log(`- in GET /deduper/article-duplicate-analyses-status`);
+
+		try {
+			// Query the ArticleDuplicateAnalysis table to get any one row with reportId
+			const analysisRecord = await ArticleDuplicateAnalysis.findOne({
+				attributes: ["reportId"],
+			});
+
+			// Determine status and reportId based on query result
+			if (analysisRecord && analysisRecord.reportId !== null) {
+				// Table is populated
+				res.json({
+					status: "populated",
+					reportId: analysisRecord.reportId,
+				});
+			} else {
+				// Table is empty or no reportId found
+				res.json({
+					status: "empty",
+					reportId: null,
+				});
+			}
+		} catch (error) {
+			console.error(
+				"Error in GET /deduper/article-duplicate-analyses-status:",
+				error
+			);
+			res.status(500).json({
+				result: false,
+				message: "Internal server error",
+				error: error.message,
+			});
+		}
+	}
+);
+
 module.exports = router;

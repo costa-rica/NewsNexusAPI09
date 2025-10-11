@@ -116,7 +116,71 @@ router.get(
 	}
 );
 
-// 🔹 POST /analysis/download-excel-file/:excelFileName - Download Report
+// 🔹 GET /analysis/download-excel-file/:excelFileName - Download existing Excel file
+router.get(
+	"/download-excel-file/:excelFileName",
+	authenticateToken,
+	async (req, res) => {
+		console.log(
+			`- in GET /analysis/download-excel-file/${req.params.excelFileName}`
+		);
+		const { excelFileName } = req.params;
+
+		try {
+			// Get the directory path from environment variable
+			const outputDir = process.env.PATH_TO_UTILITIES_ANALYSIS_SPREADSHEETS;
+			if (!outputDir) {
+				return res.status(500).json({
+					result: false,
+					message: "PATH_TO_UTILITIES_ANALYSIS_SPREADSHEETS environment variable not configured"
+				});
+			}
+
+			const filePathAndName = path.join(outputDir, excelFileName);
+
+			// Check if file exists
+			if (!fs.existsSync(filePathAndName)) {
+				return res.status(404).json({
+					result: false,
+					message: "File not found."
+				});
+			}
+
+			console.log(`Downloading file: ${filePathAndName}`);
+
+			res.setHeader(
+				"Content-Type",
+				"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+			);
+			res.setHeader(
+				"Content-Disposition",
+				`attachment; filename="${excelFileName}"`
+			);
+
+			// Let Express handle download
+			res.download(filePathAndName, excelFileName, (err) => {
+				if (err) {
+					console.error("Download error:", err);
+					if (!res.headersSent) {
+						res.status(500).json({
+							result: false,
+							message: "File download failed."
+						});
+					}
+				}
+			});
+		} catch (error) {
+			console.error("Error processing request:", error);
+			res.status(500).json({
+				result: false,
+				message: "Internal server error",
+				error: error.message,
+			});
+		}
+	}
+);
+
+// 🔹 POST /analysis/download-excel-file/:excelFileName - Create and download Excel file
 router.post(
 	"/download-excel-file/:excelFileName",
 	authenticateToken,

@@ -9,8 +9,6 @@ const {
 	makeArticleApprovedsTableDictionary,
 	createDeduperAnalysis,
 } = require("../modules/deduper");
-const fs = require("fs").promises;
-const path = require("path");
 const axios = require("axios");
 
 // 🔹 POST /deduper/report-checker-table
@@ -141,7 +139,7 @@ router.get("/request-job/:reportId", authenticateToken, async (req, res) => {
 		const { reportId } = req.params;
 		console.log(`reportId: ${reportId}`);
 
-		// Get all articles associated with this report
+		// Validate that the report exists and has articles
 		const articleReportContracts = await ArticleReportContract.findAll({
 			where: {
 				reportId: reportId,
@@ -156,30 +154,9 @@ router.get("/request-job/:reportId", authenticateToken, async (req, res) => {
 			});
 		}
 
-		// Extract articleIds
-		const articleIds = articleReportContracts.map(
-			(contract) => contract.articleId
-		);
-		console.log(`Found ${articleIds.length} articles for reportId ${reportId}`);
+		console.log(`Found ${articleReportContracts.length} articles for reportId ${reportId}`);
 
-		// Create CSV content
-		const csvContent = "articleId\n" + articleIds.join("\n");
-
-		// Get path from environment variable
-		const deduperPath = process.env.PATH_TO_UTILITIES_DEDUPER;
-		if (!deduperPath) {
-			return res.status(500).json({
-				result: false,
-				message: "PATH_TO_UTILITIES_DEDUPER environment variable not configured",
-			});
-		}
-
-		// Write CSV file
-		const csvFilePath = path.join(deduperPath, "article_ids.csv");
-		await fs.writeFile(csvFilePath, csvContent, "utf8");
-		console.log(`Created CSV file at: ${csvFilePath}`);
-
-		// Send request to NewsNexusPythonQueuer
+		// Get Python Queuer base URL from environment
 		const pythonQueuerBaseUrl = process.env.URL_BASE_NEWS_NEXUS_PYTHON_QUEUER;
 		if (!pythonQueuerBaseUrl) {
 			return res.status(500).json({
@@ -189,25 +166,38 @@ router.get("/request-job/:reportId", authenticateToken, async (req, res) => {
 			});
 		}
 
-		const pythonQueuerUrl = `${pythonQueuerBaseUrl}deduper/jobs`;
+		// Build the URL for the new reportId-specific endpoint
+		const pythonQueuerUrl = `${pythonQueuerBaseUrl}deduper/jobs/reportId/${reportId}`;
 		console.log(`Sending request to: ${pythonQueuerUrl}`);
 
+		// Send GET request to NewsNexusPythonQueuer
 		const response = await axios.get(pythonQueuerUrl);
 		console.log(
 			`Python Queuer response:`,
 			JSON.stringify(response.data, null, 2)
 		);
 
-		// Return success with both the CSV info and the Python Queuer response
-		res.json({
+		// Return success with the Python Queuer response
+		res.status(201).json({
 			result: true,
 			message: "Job request successful",
-			csvFilePath: csvFilePath,
-			articleCount: articleIds.length,
+			articleCount: articleReportContracts.length,
 			pythonQueuerResponse: response.data,
 		});
 	} catch (error) {
 		console.error("Error in GET /deduper/request-job/:reportId:", error);
+
+		// If it's an Axios error with a response, include that information
+		if (error.response) {
+			return res.status(error.response.status || 500).json({
+				result: false,
+				message: "Error creating job via Python Queuer",
+				error: error.message,
+				pythonQueuerResponse: error.response.data,
+			});
+		}
+
+		// Generic error response
 		res.status(500).json({
 			result: false,
 			message: "Internal server error",

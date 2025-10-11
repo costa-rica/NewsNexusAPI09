@@ -133,7 +133,7 @@ curl -X POST http://localhost:8001/deduper/report-checker-table \
 
 ### GET /deduper/request-job/:reportId
 
-Initiates a deduper job in NewsNexusPythonQueuer to analyze articles for duplicates. Creates a CSV file containing article IDs and triggers the deduper microservice.
+Initiates a deduper job in NewsNexusPythonQueuer to analyze articles for duplicates associated with a specific report.
 
 **Authentication:** Required (JWT token)
 
@@ -142,30 +142,28 @@ Initiates a deduper job in NewsNexusPythonQueuer to analyze articles for duplica
 
 **Description:**
 
-This endpoint serves as a bridge between NewsNexusAPI09 and the NewsNexusPythonQueuer service. It:
+This endpoint serves as a bridge between NewsNexusAPI09 and the NewsNexusPythonQueuer service. It triggers a deduper analysis job for all articles associated with the specified report ID.
 
-1. Retrieves all article IDs associated with the specified report
-2. Creates a CSV file (`article_ids.csv`) containing the article IDs in the deduper utilities directory
-3. Sends a GET request to NewsNexusPythonQueuer to trigger a deduper job
+The NewsNexusPythonQueuer service handles retrieving the article IDs directly from the database, so no CSV file creation is required.
 
-For details on the deduper job processing, see the [NewsNexusPythonQueuer API documentation](./API_REFERENCE_PYTHON_QUEUER_01.md#deduper-endpoints).
+For details on the deduper job processing, see the [NewsNexusPythonQueuer API documentation](./API_REFERENCE_PYTHON_QUEUER_01.md#get-deduperjobsreportidreportid).
 
 **Process Flow:**
-1. Query `ArticleReportContract` table for all articles in the report
-2. Generate CSV file with header "articleId" followed by one article ID per line
-3. Write CSV to `{PATH_TO_UTILITIES_DEDUPER}/article_ids.csv`
-4. Send GET request to `{URL_BASE_NEWS_NEXUS_PYTHON_QUEUER}/deduper/jobs`
-5. Return combined response with CSV info and job details
+1. Validates that the report exists by querying `ArticleReportContract` table
+2. Confirms that articles are associated with the report (returns 404 if none found)
+3. Sends GET request to `{URL_BASE_NEWS_NEXUS_PYTHON_QUEUER}/deduper/jobs/reportId/{reportId}`
+4. Python Queuer executes: `python main.py analyze_fast --report-id {reportId}`
+5. Returns job details including jobId and status
 
-**Response (200 OK):**
+**Response (201 Created):**
 ```json
 {
   "result": true,
   "message": "Job request successful",
-  "csvFilePath": "/path/to/deduper/article_ids.csv",
   "articleCount": 25,
   "pythonQueuerResponse": {
     "jobId": 1,
+    "reportId": 123,
     "status": "pending"
   }
 }
@@ -179,16 +177,7 @@ For details on the deduper job processing, see the [NewsNexusPythonQueuer API do
 }
 ```
 
-**Response (500 Internal Server Error):**
-```json
-{
-  "result": false,
-  "message": "PATH_TO_UTILITIES_DEDUPER environment variable not configured"
-}
-```
-
-or
-
+**Response (500 Internal Server Error - Configuration):**
 ```json
 {
   "result": false,
@@ -196,8 +185,19 @@ or
 }
 ```
 
-or
+**Response (500 Internal Server Error - Python Queuer Error):**
+```json
+{
+  "result": false,
+  "message": "Error creating job via Python Queuer",
+  "error": "Error description",
+  "pythonQueuerResponse": {
+    "error": "Details from Python Queuer"
+  }
+}
+```
 
+**Response (500 Internal Server Error - Generic):**
 ```json
 {
   "result": false,
@@ -207,16 +207,7 @@ or
 ```
 
 **Environment Variables Required:**
-- `PATH_TO_UTILITIES_DEDUPER`: Directory path where article_ids.csv will be created
 - `URL_BASE_NEWS_NEXUS_PYTHON_QUEUER`: Base URL of the NewsNexusPythonQueuer service (e.g., "http://localhost:5000/")
-
-**CSV File Format:**
-```csv
-articleId
-1234
-5678
-9012
-```
 
 **Example:**
 ```bash
@@ -225,7 +216,12 @@ curl -X GET http://localhost:8001/deduper/request-job/123 \
 ```
 
 **Related Documentation:**
-- [NewsNexusPythonQueuer Deduper Endpoints](./API_REFERENCE_PYTHON_QUEUER_01.md#deduper-endpoints)
+- [NewsNexusPythonQueuer GET /deduper/jobs/reportId/{reportId}](./API_REFERENCE_PYTHON_QUEUER_01.md#get-deduperjobsreportidreportid)
+
+**Notes:**
+- The Python Queuer handles all article ID retrieval internally
+- The deduper microservice uses the `--report-id` flag to analyze only articles from the specified report
+- Returns a 201 Created status to match the Python Queuer's response pattern
 
 ---
 

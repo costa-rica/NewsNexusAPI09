@@ -70,12 +70,14 @@ This endpoint performs a multi-step analysis to identify duplicate articles:
         "publicationDateForPdfReport": "2025-09-28",
         "textForPdfReport": "Article text...",
         "urlForPdfReport": "https://example.com/article",
-        "state": "CA"
+        "state": "CA",
+        "articleReportRefIdNew": 5
       },
       "approvedArticlesArray": [
         {
           "articleIdApproved": 5678,
           "embeddingSearch": 0.92,
+          "articleReportRefIdApproved": 3,
           "headlineForPdfReport": "Similar Headline",
           "publicationNameForPdfReport": "Other Source",
           "publicationDateForPdfReport": "2025-09-20",

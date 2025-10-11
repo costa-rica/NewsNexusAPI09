@@ -55,8 +55,12 @@ router.post("/report-checker-table", authenticateToken, async (req, res) => {
 			const articleReferenceNumberInReport = contract.articleReferenceNumberInReport;
 
 			// Get the article data from articleApprovedsTableDictionary
-			const newArticleInformation =
-				articleApprovedsTableDictionary[articleId] || null;
+			const newArticleInformation = articleApprovedsTableDictionary[articleId]
+				? {
+					...articleApprovedsTableDictionary[articleId],
+					articleReportRefIdNew: articleReferenceNumberInReport
+				}
+				: null;
 
 			// Get all ArticleDuplicateAnalysis entries for this articleId (as articleIdNew)
 			// Exclude self-matches where sameArticleIdFlag = 1
@@ -85,6 +89,7 @@ router.post("/report-checker-table", authenticateToken, async (req, res) => {
 					approvedArticlesArray.push({
 						articleIdApproved: entry.articleIdApproved,
 						embeddingSearch: embeddingSearch,
+						articleReportRefIdApproved: articleIdToRefNumberMap[entry.articleIdApproved] || null,
 						...articleApprovedsTableDictionary[entry.articleIdApproved],
 					});
 				}

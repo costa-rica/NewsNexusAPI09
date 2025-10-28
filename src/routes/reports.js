@@ -185,9 +185,9 @@ router.post("/create", authenticateToken, async (req, res) => {
 				"America/New_York"
 			);
 
-			console.log("----- Verify dateParts are New York Time -----");
-			console.log(JSON.stringify(dateParts, null, 2));
-			console.log("----- ------ ----");
+			// console.log("----- Verify dateParts are New York Time -----");
+			// console.log(JSON.stringify(dateParts, null, 2));
+			// console.log("----- ------ ----");
 
 			// Build string "MM/DD/YYYY"
 			// const submittedDateString = `${dateParts.month}/${dateParts.day}/${dateParts.year}`;

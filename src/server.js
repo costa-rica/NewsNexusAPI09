@@ -5,13 +5,15 @@ const APP_NAME = process.env.APP_NAME || "DefaultApp"; // Fallback if APP_NAME i
 
 // Override console.log and console.error to include the app name
 console.log = (
-	(log) => (message) =>
-		log(`[${APP_NAME}] ${message}`)
+	(log) =>
+	(...args) =>
+		log(`[${APP_NAME}]`, ...args)
 )(console.log);
 
 console.error = (
-	(log) => (message) =>
-		log(`[${APP_NAME}] ${message}`)
+	(log) =>
+	(...args) =>
+		log(`[${APP_NAME}]`, ...args)
 )(console.error);
 
 // Capture stack traces for errors

@@ -17,7 +17,7 @@ npm install
 - [Database documentation](./docs/DATABASE_OVERVIEW.md)
 - [API Reference - News Nexus Python Queuer 01](./docs/API_REFERENCE_PYTHON_QUEUER_01.md)
 
-## .env 
+## .env
 
 ### server
 
@@ -34,11 +34,15 @@ PATH_TO_AUTOMATION_EXCEL_FILES=/home/shared/project_resources/NewsNexus09/utilit
 PATH_TO_UTILITIES_ANALYSIS_SPREADSHEETS=/home/shared/project_resources/NewsNexus09/utilities/analysis_spreadsheets
 PATH_TO_UTILITIES_DEDUPER=/Users/nick/Documents/_project_resources/NewsNexus09/utilities/deduper
 URL_BASE_NEWS_NEXUS_PYTHON_QUEUER=http://127.0.0.1:5000/
+URL_BASE_TO_WEBSITE=https://news-nexus.kineticmetrics.com/
 ADMIN_EMAIL_CREATE_ON_STARTUP=["nickrodriguez@kineticmetrics.com"]
+ADMIN_NODEMAILER_EMAIL_ADDRESS="nrodrig1@gmail.com"
+ADMIN_NODEMAILER_EMAIL_PASSWORD="secret_password"
 NODE_ENV=production
 AUTHENTIFICATION_TURNED_OFF=false
 ACTIVATE_API_REQUESTS_TO_OUTSIDE_SOURCES=true
 ```
+
 ### Mac workstation
 
 ```
@@ -55,7 +59,10 @@ PATH_TO_AUTOMATION_EXCEL_FILES=/Users/nick/Documents/_project_resources/NewsNexu
 PATH_TO_UTILITIES_ANALYSIS_SPREADSHEETS=/Users/nick/Documents/_project_resources/NewsNexus09/utilities/analysis_spreadsheets
 PATH_TO_UTILITIES_DEDUPER=/Users/nick/Documents/_project_resources/NewsNexus09/utilities/deduper
 URL_BASE_NEWS_NEXUS_PYTHON_QUEUER=http://127.0.0.1:5000/
+URL_BASE_TO_WEBSITE=http://localhost:3001
 ADMIN_EMAIL_CREATE_ON_STARTUP=["nickrodriguez@kineticmetrics.com"]
+ADMIN_NODEMAILER_EMAIL_ADDRESS="nrodrig1@gmail.com"
+ADMIN_NODEMAILER_EMAIL_PASSWORD="secret_password"
 NODE_ENV=production
 AUTHENTIFICATION_TURNED_OFF=false
 ACTIVATE_API_REQUESTS_TO_OUTSIDE_SOURCES=true
@@ -81,9 +88,9 @@ To add a new Artificial Intelligence entity. This will add to the ArtificialInte
 
 ```json
 {
-	"name": "NewsNexusZeroShotClassifier01",
-	"huggingFaceModelName": "Xenova/bart-large-mnli",
-	"huggingFaceModelType": "zero-shot-classification"
+  "name": "NewsNexusZeroShotClassifier01",
+  "huggingFaceModelName": "Xenova/bart-large-mnli",
+  "huggingFaceModelType": "zero-shot-classification"
 }
 ```
 

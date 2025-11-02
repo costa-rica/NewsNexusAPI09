@@ -26,10 +26,10 @@ var app = express();
 const cors = require("cors");
 // app.use(cors());
 app.use(
-	cors({
-		credentials: true,
-		exposedHeaders: ["Content-Disposition"], // <-- this line is key
-	})
+  cors({
+    credentials: true,
+    exposedHeaders: ["Content-Disposition"], // <-- this line is key
+  })
 );
 
 app.use(logger("dev"));
@@ -61,19 +61,19 @@ app.use("/deduper", deduperRouter);
 initModels();
 
 const {
-	onStartUpCreateEnvUsers,
-	verifyCheckDirectoryExists,
+  onStartUpCreateEnvUsers,
+  verifyCheckDirectoryExists,
 } = require("./modules/onStartUp");
 // Sync database and start server
 sequelize
-	.sync()
-	.then(async () => {
-		if (process.env.NODE_ENV !== "test") {
-			console.log("✅ Database connected & synced");
-			await onStartUpCreateEnvUsers(); // <-- Call function here
-			verifyCheckDirectoryExists();
-		}
-	})
-	.catch((error) => console.error("Error syncing database:", error));
+  .sync()
+  .then(async () => {
+    if (process.env.NODE_ENV !== "test") {
+      console.log("✅ Database connected & synced");
+      await onStartUpCreateEnvUsers(); // <-- Call function here
+      verifyCheckDirectoryExists();
+    }
+  })
+  .catch((error) => console.error("Error syncing database:", error));
 
 module.exports = app;

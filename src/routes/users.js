@@ -138,24 +138,67 @@ router.post("/request-password-reset", async (req, res) => {
   }
 });
 
+// 🔹 POST /users/reset-password/:token: Reset password
 router.post("/reset-password/:token", async (req, res) => {
   const token = req.params.token;
-  const { password } = req.body;
+  console.log(`- in POST /users/reset-password/:token`);
+  console.log(`  Token received: ${token.substring(0, 20)}...`);
+  console.log(`  Request body:`, req.body);
+
+  const { newPassword } = req.body;
+  console.log(`  Password received: ${newPassword ? "Yes" : "No"}`);
+
+  // Validate password is present
+  if (!newPassword) {
+    console.log(`  ❌ Password missing in request body`);
+    return res.status(400).json({
+      result: false,
+      error: "Password is required",
+    });
+  }
 
   try {
+    console.log(`  Verifying JWT token...`);
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    console.log(`  Token decoded successfully. User ID:`, decoded.id);
+
+    console.log(`  Looking up user with ID: ${decoded.id}`);
     const user = await User.findByPk(decoded.id);
 
     if (!user) {
-      return res.status(404).json({ message: "User not found" });
+      console.log(`  ❌ User not found with ID: ${decoded.id}`);
+      return res.status(404).json({ result: false, message: "User not found" });
     }
 
-    const hashedPassword = await bcrypt.hash(password, 10);
+    console.log(`  User found: ${user.email}`);
+    console.log(`  Hashing new password...`);
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    console.log(`  Updating user password...`);
     await user.update({ password: hashedPassword });
 
-    res.json({ message: "Password reset successfully" });
+    console.log(`  ✓ Password reset successfully for user: ${user.email}`);
+    res.json({ result: true, message: "Password reset successfully" });
   } catch (error) {
-    res.status(500).json({ error: "Server error" });
+    console.error(`  ❌ Error in /reset-password/:token:`, {
+      name: error.name,
+      message: error.message,
+      stack: error.stack,
+    });
+
+    if (error.name === "JsonWebTokenError") {
+      return res.status(400).json({
+        result: false,
+        error: "Invalid reset token",
+      });
+    } else if (error.name === "TokenExpiredError") {
+      return res.status(400).json({
+        result: false,
+        error: "Reset token has expired. Please request a new password reset.",
+      });
+    }
+
+    res.status(500).json({ result: false, error: "Server error" });
   }
 });
 

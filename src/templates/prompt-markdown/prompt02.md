@@ -46,12 +46,8 @@ Both Relevance score and United States score range from 0 to 10, where 0 is defi
 
 ### Article Title
 
-<< article_title >>
+<< ARTICLE_TITLE >>
 
-### Article Abstract
+### Article Description
 
-<< article_abstract >>
-
-### Article Content
-
-<< article_scraped_content >>
+<< ARTICLE_DESCRIPTION >>

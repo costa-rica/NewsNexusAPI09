@@ -19,8 +19,11 @@ var reportsRouter = require("./routes/reports");
 var automationsRouter = require("./routes/newsOrgs/automations");
 var artificialIntelligenceRouter = require("./routes/artificialIntelligence");
 var newsDataIoRouter = require("./routes/newsOrgs/newsDataIo");
-var analysisRouter = require("./routes/analysis");
-var deduperRouter = require("./routes/deduper");
+// var analysisRouter = require("./routes/analysis");
+// var deduperRouter = require("./routes/deduper");
+var analysisApprovedArticlesRouter = require("./routes/analysis/approvedArticles");
+var analysisDeduperRouter = require("./routes/analysis/deduper");
+var downloadsRouter = require("./routes/downloads");
 
 var app = express();
 const cors = require("cors");
@@ -55,8 +58,11 @@ app.use("/reports", reportsRouter);
 app.use("/automations", automationsRouter);
 app.use("/artificial-intelligence", artificialIntelligenceRouter);
 app.use("/news-data-io", newsDataIoRouter);
-app.use("/analysis", analysisRouter);
-app.use("/deduper", deduperRouter);
+// app.use("/analysis", analysisRouter);
+// app.use("/deduper", deduperRouter);
+app.use("/analysis/approved-articles", analysisApprovedArticlesRouter);
+app.use("/analysis/deduper", analysisDeduperRouter);
+app.use("/downloads", downloadsRouter);
 
 initModels();
 

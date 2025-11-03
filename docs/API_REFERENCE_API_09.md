@@ -6,13 +6,14 @@ This document provides comprehensive documentation for all available API endpoin
 
 All deduper endpoints are prefixed with `/deduper` and require JWT authentication.
 
-### POST /deduper/report-checker-table
+### POST /analysis/deduper/report-checker-table
 
 Analyzes articles in a report to identify duplicates across all approved articles. Creates a comprehensive duplicate analysis dictionary and generates an Excel spreadsheet report.
 
 **Authentication:** Required (JWT token)
 
 **Request Body:**
+
 ```json
 {
   "reportId": 123,
@@ -22,6 +23,7 @@ Analyzes articles in a report to identify duplicates across all approved article
 ```
 
 **Parameters:**
+
 - `reportId` (integer, required): The report ID to analyze
 - `embeddingThresholdMinimum` (float, required): Minimum embedding similarity score threshold (0-1) for including approved articles in the analysis
 - `spacerRow` (boolean, optional): When true, inserts an empty row between article groups in the Excel output for improved readability. Defaults to false if not provided
@@ -31,12 +33,14 @@ Analyzes articles in a report to identify duplicates across all approved article
 This endpoint performs a multi-step analysis to identify duplicate articles:
 
 1. **Data Collection Phase:**
+
    - Retrieves all approved articles data via `makeArticleApprovedsTableDictionary()` (src/modules/deduper.js:16)
    - Fetches all articles associated with the report from `ArticleReportContract` table
    - Builds reference number map from ALL `ArticleReportContract` records, selecting the latest report (highest reportId) for each article
    - Queries `ArticleDuplicateAnalysis` table for similarity scores between report articles and approved articles
 
 2. **Dictionary Construction Phase:**
+
    - Builds `reportArticleDictionary` with article IDs as root-level keys
    - Each entry contains:
      - `maxEmbedding`: Highest similarity score found for this article
@@ -45,6 +49,7 @@ This endpoint performs a multi-step analysis to identify duplicate articles:
      - `approvedArticlesArray`: Array of approved articles that exceed the embedding threshold, sorted by similarity score (descending)
 
 3. **Filtering and Sorting:**
+
    - Excludes self-matches (`sameArticleIdFlag = 0`)
    - Only includes approved articles with `embeddingSearch >= embeddingThresholdMinimum`
    - Sorts approved articles by embedding score (highest similarity first)
@@ -57,6 +62,7 @@ This endpoint performs a multi-step analysis to identify duplicate articles:
    - Groups are sorted by `maxEmbedding` (highest similarity groups first)
 
 **Response (200 OK):**
+
 ```json
 {
   "length": 25,
@@ -92,6 +98,7 @@ This endpoint performs a multi-step analysis to identify duplicate articles:
 ```
 
 **Response (500 Internal Server Error):**
+
 ```json
 {
   "result": false,
@@ -107,6 +114,7 @@ The generated spreadsheet (`deduper_analysis.xlsx`) follows this structure:
 **Columns:** Id | articleIdNew | articleReportRefIdNew | ArticleIdApproved | articleReportRefIdApproved | embeddingSearch | headlineForPdfReport | publicationNameForPdfReport | publicationDateForPdfReport | textForPdfReport | urlForPdfReport | state
 
 **Row Organization:**
+
 - Groups are ordered by `maxEmbedding` (descending)
 - Within each group:
   - Row 1: New article (where `articleIdNew = ArticleIdApproved`, `articleReportRefIdNew = articleReportRefIdApproved`, `embeddingSearch = 1`)
@@ -117,11 +125,13 @@ The generated spreadsheet (`deduper_analysis.xlsx`) follows this structure:
 - For articles appearing in multiple reports, the reference number from the latest report (highest reportId) is used
 
 **Environment Variables Required:**
+
 - `PATH_TO_UTILITIES_ANALYSIS_SPREADSHEETS`: Directory path for saving Excel reports
 
 **Example:**
+
 ```bash
-curl -X POST http://localhost:8001/deduper/report-checker-table \
+curl -X POST http://localhost:8001/analysis/deduper/report-checker-table \
   -H "Authorization: Bearer YOUR_JWT_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
@@ -133,13 +143,14 @@ curl -X POST http://localhost:8001/deduper/report-checker-table \
 
 ---
 
-### GET /deduper/request-job/:reportId
+### GET /analysis/deduper/request-job/:reportId
 
 Initiates a deduper job in NewsNexusPythonQueuer to analyze articles for duplicates associated with a specific report.
 
 **Authentication:** Required (JWT token)
 
 **URL Parameters:**
+
 - `reportId` (integer, required): The report ID to process
 
 **Description:**
@@ -151,6 +162,7 @@ The NewsNexusPythonQueuer service handles retrieving the article IDs directly fr
 For details on the deduper job processing, see the [NewsNexusPythonQueuer API documentation](./API_REFERENCE_PYTHON_QUEUER_01.md#get-deduperjobsreportidreportid).
 
 **Process Flow:**
+
 1. Validates that the report exists by querying `ArticleReportContract` table
 2. Confirms that articles are associated with the report (returns 404 if none found)
 3. Sends GET request to `{URL_BASE_NEWS_NEXUS_PYTHON_QUEUER}/deduper/jobs/reportId/{reportId}`
@@ -158,6 +170,7 @@ For details on the deduper job processing, see the [NewsNexusPythonQueuer API do
 5. Returns job details including jobId and status
 
 **Response (201 Created):**
+
 ```json
 {
   "result": true,
@@ -172,6 +185,7 @@ For details on the deduper job processing, see the [NewsNexusPythonQueuer API do
 ```
 
 **Response (404 Not Found):**
+
 ```json
 {
   "result": false,
@@ -180,6 +194,7 @@ For details on the deduper job processing, see the [NewsNexusPythonQueuer API do
 ```
 
 **Response (500 Internal Server Error - Configuration):**
+
 ```json
 {
   "result": false,
@@ -188,6 +203,7 @@ For details on the deduper job processing, see the [NewsNexusPythonQueuer API do
 ```
 
 **Response (500 Internal Server Error - Python Queuer Error):**
+
 ```json
 {
   "result": false,
@@ -200,6 +216,7 @@ For details on the deduper job processing, see the [NewsNexusPythonQueuer API do
 ```
 
 **Response (500 Internal Server Error - Generic):**
+
 ```json
 {
   "result": false,
@@ -209,25 +226,29 @@ For details on the deduper job processing, see the [NewsNexusPythonQueuer API do
 ```
 
 **Environment Variables Required:**
+
 - `URL_BASE_NEWS_NEXUS_PYTHON_QUEUER`: Base URL of the NewsNexusPythonQueuer service (e.g., "http://localhost:5000/")
 
 **Example:**
+
 ```bash
 curl -X GET http://localhost:8001/deduper/request-job/123 \
   -H "Authorization: Bearer YOUR_JWT_TOKEN"
 ```
 
 **Related Documentation:**
+
 - [NewsNexusPythonQueuer GET /deduper/jobs/reportId/{reportId}](./API_REFERENCE_PYTHON_QUEUER_01.md#get-deduperjobsreportidreportid)
 
 **Notes:**
+
 - The Python Queuer handles all article ID retrieval internally
 - The deduper microservice uses the `--report-id` flag to analyze only articles from the specified report
 - Returns a 201 Created status to match the Python Queuer's response pattern
 
 ---
 
-### GET /deduper/job-list-status
+### GET /analysis/deduper/job-list-status
 
 Retrieves the status of all deduper jobs by relaying the request to the NewsNexusPythonQueuer service.
 
@@ -240,11 +261,13 @@ This endpoint acts as a proxy to the NewsNexusPythonQueuer's `GET /deduper/jobs/
 For detailed information about job statuses and the underlying service, see the [NewsNexusPythonQueuer API documentation](./API_REFERENCE_PYTHON_QUEUER_01.md#get-deduperjobslist).
 
 **Process Flow:**
+
 1. Validates that the NewsNexusPythonQueuer service is configured
 2. Sends a GET request to `{URL_BASE_NEWS_NEXUS_PYTHON_QUEUER}/deduper/jobs/list`
 3. Returns the response from the Python Queuer service
 
 **Response (200 OK):**
+
 ```json
 {
   "jobs": [
@@ -268,6 +291,7 @@ For detailed information about job statuses and the underlying service, see the 
 ```
 
 **Job Status Values:**
+
 - `pending`: Job created but not yet started
 - `running`: Job is currently executing
 - `completed`: Job finished successfully (exit code 0)
@@ -275,6 +299,7 @@ For detailed information about job statuses and the underlying service, see the 
 - `cancelled`: Job was manually terminated
 
 **Response (500 Internal Server Error - Configuration):**
+
 ```json
 {
   "result": false,
@@ -283,6 +308,7 @@ For detailed information about job statuses and the underlying service, see the 
 ```
 
 **Response (500 Internal Server Error - Python Queuer Error):**
+
 ```json
 {
   "result": false,
@@ -295,6 +321,7 @@ For detailed information about job statuses and the underlying service, see the 
 ```
 
 **Response (500 Internal Server Error - Generic):**
+
 ```json
 {
   "result": false,
@@ -304,25 +331,29 @@ For detailed information about job statuses and the underlying service, see the 
 ```
 
 **Environment Variables Required:**
+
 - `URL_BASE_NEWS_NEXUS_PYTHON_QUEUER`: Base URL of the NewsNexusPythonQueuer service (e.g., "http://localhost:5000/")
 
 **Example:**
+
 ```bash
-curl -X GET http://localhost:8001/deduper/job-list-status \
+curl -X GET http://localhost:8001/analysis/deduper/job-list-status \
   -H "Authorization: Bearer YOUR_JWT_TOKEN"
 ```
 
 **Related Documentation:**
+
 - [NewsNexusPythonQueuer GET /deduper/jobs/list](./API_REFERENCE_PYTHON_QUEUER_01.md#get-deduperjobslist)
 
 **Notes:**
+
 - Job IDs are sequential integers starting from 1
 - Job IDs reset when the NewsNexusPythonQueuer service restarts
 - The jobs array may be empty if no jobs have been created yet
 
 ---
 
-### DELETE /deduper/clear-article-duplicate-analyses-table
+### DELETE /analysis/deduper/clear-article-duplicate-analyses-table
 
 Clears the ArticleDuplicateAnalysis table by sending a request to the NewsNexusPythonQueuer service. This operation cancels all running/pending deduper jobs and removes all duplicate analysis data from the database.
 
@@ -337,6 +368,7 @@ This endpoint acts as a proxy to the NewsNexusPythonQueuer's `DELETE /deduper/cl
 3. Returns the response from the Python Queuer service
 
 **IMPORTANT:** This is a destructive operation that:
+
 - Immediately cancels ALL pending and running deduper jobs
 - Executes the `clear_table -y` command from NewsNexusDeduper02
 - Permanently clears all data from the ArticleDuplicateAnalysis table
@@ -344,6 +376,7 @@ This endpoint acts as a proxy to the NewsNexusPythonQueuer's `DELETE /deduper/cl
 For detailed information about the underlying clear operation, see the [NewsNexusPythonQueuer API documentation](./API_REFERENCE_PYTHON_QUEUER_01.md#delete-deduperclear-db-table).
 
 **Response (200 OK):**
+
 ```json
 {
   "result": true,
@@ -360,6 +393,7 @@ For detailed information about the underlying clear operation, see the [NewsNexu
 ```
 
 **Response (500 Internal Server Error - Configuration):**
+
 ```json
 {
   "result": false,
@@ -368,6 +402,7 @@ For detailed information about the underlying clear operation, see the [NewsNexu
 ```
 
 **Response (500 Internal Server Error - Python Queuer Error):**
+
 ```json
 {
   "result": false,
@@ -386,6 +421,7 @@ For detailed information about the underlying clear operation, see the [NewsNexu
 ```
 
 **Response (500 Internal Server Error - Generic):**
+
 ```json
 {
   "result": false,
@@ -395,6 +431,7 @@ For detailed information about the underlying clear operation, see the [NewsNexu
 ```
 
 **Python Queuer Response Fields:**
+
 - `cleared`: Boolean indicating if the table was successfully cleared
 - `cancelledJobs`: Array of job IDs that were cancelled before clearing
 - `exitCode`: Exit code from the clear_table command (0 = success)
@@ -403,18 +440,22 @@ For detailed information about the underlying clear operation, see the [NewsNexu
 - `timestamp`: ISO 8601 timestamp of when the operation completed
 
 **Environment Variables Required:**
+
 - `URL_BASE_NEWS_NEXUS_PYTHON_QUEUER`: Base URL of the NewsNexusPythonQueuer service (e.g., "http://localhost:5000/")
 
 **Example:**
+
 ```bash
-curl -X DELETE http://localhost:8001/deduper/clear-article-duplicate-analyses-table \
+curl -X DELETE http://localhost:8001/analysis/deduper/clear-article-duplicate-analyses-table \
   -H "Authorization: Bearer YOUR_JWT_TOKEN"
 ```
 
 **Related Documentation:**
+
 - [NewsNexusPythonQueuer DELETE /deduper/clear-db-table](./API_REFERENCE_PYTHON_QUEUER_01.md#delete-deduperclear-db-table)
 
 **Notes:**
+
 - This operation runs synchronously through the Python Queuer (not queued)
 - Has a 60-second timeout for safety (enforced by Python Queuer)
 - All active deduper jobs are automatically cancelled before the table is cleared

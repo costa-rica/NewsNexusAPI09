@@ -39,42 +39,42 @@ NewsNexusDb09/
 ```ts
 // src/models/Example.ts
 import {
-	DataTypes,
-	Model,
-	InferAttributes,
-	InferCreationAttributes,
-	CreationOptional,
-	ForeignKey,
-	NonAttribute,
+  DataTypes,
+  Model,
+  InferAttributes,
+  InferCreationAttributes,
+  CreationOptional,
+  ForeignKey,
+  NonAttribute,
 } from "sequelize";
 import { sequelize } from "./_connection";
 
 export class Example extends Model<
-	InferAttributes<Example>,
-	InferCreationAttributes<Example>
+  InferAttributes<Example>,
+  InferCreationAttributes<Example>
 > {
-	declare id: CreationOptional<number>;
-	declare name: string;
+  declare id: CreationOptional<number>;
+  declare name: string;
 
-	// FK example:
-	// declare userId: ForeignKey<User["id"]>;
-	// declare user?: NonAttribute<User>;
+  // FK example:
+  // declare userId: ForeignKey<User["id"]>;
+  // declare user?: NonAttribute<User>;
 }
 
 export function initExample() {
-	Example.init(
-		{
-			id: { type: DataTypes.INTEGER, autoIncrement: true, primaryKey: true },
-			name: { type: DataTypes.STRING, allowNull: false },
-			// userId: { type: DataTypes.INTEGER, allowNull: false }
-		},
-		{
-			sequelize,
-			tableName: "examples",
-			timestamps: true,
-		}
-	);
-	return Example;
+  Example.init(
+    {
+      id: { type: DataTypes.INTEGER, autoIncrement: true, primaryKey: true },
+      name: { type: DataTypes.STRING, allowNull: false },
+      // userId: { type: DataTypes.INTEGER, allowNull: false }
+    },
+    {
+      sequelize,
+      tableName: "examples",
+      timestamps: true,
+    }
+  );
+  return Example;
 }
 ```
 
@@ -90,13 +90,13 @@ import { applyAssociations } from "./_associations";
 
 /** Initialize all models and associations once per process. */
 export function initModels() {
-	initExample();
-	applyAssociations();
+  initExample();
+  applyAssociations();
 
-	return {
-		sequelize,
-		Example,
-	};
+  return {
+    sequelize,
+    Example,
+  };
 }
 
 // 👇 Export named items for consumers
@@ -424,6 +424,26 @@ Links articles to categorization entities with keyword data.
 
 _Note: Has unique index on (articleId, entityWhoCategorizesId, keyword)_
 
+### ArticleEntityWhoCategorizedArticleContracts02
+
+**Model:** `ArticleEntityWhoCategorizedArticleContracts02`
+
+Links articles to categorization entities with flexible key-value storage.
+
+| Field                  | Type    | Constraints                 | Description                     |
+| ---------------------- | ------- | --------------------------- | ------------------------------- |
+| id                     | INTEGER | PRIMARY KEY, AUTO_INCREMENT | Unique contract ID              |
+| articleId              | INTEGER | FK, NOT NULL                | Reference to article            |
+| entityWhoCategorizesId | INTEGER | FK, NOT NULL                | Reference to categorizer        |
+| key                    | STRING  | NULLABLE                    | Categorization key              |
+| valueString            | STRING  | NULLABLE                    | String value for categorization |
+| valueNumber            | FLOAT   | NULLABLE                    | Numeric value for metadata      |
+| valueBoolean           | BOOLEAN | NULLABLE                    | Boolean flag for metadata       |
+| createdAt              | DATE    | NOT NULL                    | Timestamp                       |
+| updatedAt              | DATE    | NOT NULL                    | Timestamp                       |
+
+_Note: Has unique index on (articleId, entityWhoCategorizesId, key)_
+
 ### NewsApiRequestWebsiteDomainContracts
 
 **Model:** `NewsApiRequestWebsiteDomainContract`
@@ -458,6 +478,8 @@ The following relationships are defined in `src/models/_associations.ts` and est
 
 - **Article → ArticleStateContract** (1:Many): Articles can be associated with multiple states
 - **Article → ArticleKeywordContract** (1:Many): Articles can have multiple keywords/categorizations
+- **Article → ArticleEntityWhoCategorizedArticleContract** (1:Many): Articles can be categorized with keyword and rating data
+- **Article → ArticleEntityWhoCategorizedArticleContracts02** (1:Many): Articles can be categorized with flexible key-value metadata
 - **Article → ArticleContent** (1:Many): Articles can have multiple content versions
 - **Article → ArticleReportContract** (1:Many): Articles can appear in multiple reports
 - **Article → ArticleReviewed** (1:Many): Articles can have multiple review records
@@ -483,6 +505,8 @@ The following relationships are defined in `src/models/_associations.ts` and est
 
 - **ArtificialIntelligence → EntityWhoCategorizedArticle** (1:Many): AI systems can categorize multiple articles
 - **EntityWhoCategorizedArticle → ArticleKeywordContract** (1:Many): Categorizers can assign multiple keywords
+- **EntityWhoCategorizedArticle → ArticleEntityWhoCategorizedArticleContract** (1:Many): Categorizers can assign keyword and rating data
+- **EntityWhoCategorizedArticle → ArticleEntityWhoCategorizedArticleContracts02** (1:Many): Categorizers can assign flexible key-value metadata
 
 ### Many-to-Many Relationships
 
@@ -493,6 +517,10 @@ Articles can be associated with multiple states, and states can have multiple ar
 #### Article ↔ EntityWhoCategorizedArticle (through ArticleEntityWhoCategorizedArticleContract)
 
 Articles can be categorized by multiple entities, and entities can categorize multiple articles. This relationship includes keyword and rating data.
+
+#### Article ↔ EntityWhoCategorizedArticle (through ArticleEntityWhoCategorizedArticleContracts02)
+
+Articles can be categorized by multiple entities with flexible key-value storage, and entities can categorize multiple articles. This relationship supports string, numeric, and boolean values for metadata storage.
 
 #### NewsApiRequest ↔ WebsiteDomain (through NewsApiRequestWebsiteDomainContract)
 
@@ -512,5 +540,6 @@ News sources can be filtered by multiple states, and states can filter multiple 
 - **ArticleStateContract**: Links articles to US states with timestamps
 - **ArticleReportContract**: Links articles to reports with reference numbers and CPSC acceptance status
 - **ArticleEntityWhoCategorizedArticleContract**: Links articles to categorizers with keyword and rating data (unique index on articleId, entityWhoCategorizesId, keyword)
+- **ArticleEntityWhoCategorizedArticleContracts02**: Links articles to categorizers with flexible key-value storage supporting string, numeric, and boolean values (unique index on articleId, entityWhoCategorizesId, key)
 - **NewsApiRequestWebsiteDomainContract**: Links API requests to website domains with include/exclude status
 - **NewsArticleAggregatorSourceStateContract**: Links news sources to states for geographic filtering

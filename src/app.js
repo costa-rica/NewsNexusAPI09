@@ -23,6 +23,7 @@ var newsDataIoRouter = require("./routes/newsOrgs/newsDataIo");
 // var deduperRouter = require("./routes/deduper");
 var analysisApprovedArticlesRouter = require("./routes/analysis/approvedArticles");
 var analysisDeduperRouter = require("./routes/analysis/deduper");
+var analysisLlm01Router = require("./routes/analysis/llm01");
 var downloadsRouter = require("./routes/downloads");
 
 var app = express();
@@ -62,6 +63,7 @@ app.use("/news-data-io", newsDataIoRouter);
 // app.use("/deduper", deduperRouter);
 app.use("/analysis/approved-articles", analysisApprovedArticlesRouter);
 app.use("/analysis/deduper", analysisDeduperRouter);
+app.use("/analysis/llm01", analysisLlm01Router);
 app.use("/downloads", downloadsRouter);
 
 initModels();

@@ -16,15 +16,13 @@ An article is relevant if it identifies a consumer product that has caused a haz
 
 ### Output JSON format
 
-```json
 {
-  "product": "string",
-  "state": "string",
-  "hazard": "string",
-  "relevance_score": 0,
-  "united_states_score": 0
+"product": "string",
+"state": "string",
+"hazard": "string",
+"relevance_score": 0,
+"united_states_score": 0
 }
-```
 
 ### "product" value
 

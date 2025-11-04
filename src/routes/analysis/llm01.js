@@ -9,6 +9,7 @@ const {
 const axios = require("axios");
 const fs = require("fs").promises;
 const path = require("path");
+const { scrapeArticle } = require("../../modules/analysis/scraper");
 
 /**
  * Helper function to save AI response to file (optional/precautionary)
@@ -38,7 +39,7 @@ async function saveResponseToFile(articleId, aiResponse) {
  * Helper function to save parsed AI response to database
  * Stores key-value pairs in ArticleEntityWhoCategorizedArticleContracts02
  */
-async function saveResponseToDatabase(articleId, aiResponse) {
+async function saveResponseToDatabase(articleId, aiResponse, scrapingStatus) {
   // Step 1: Look up "Open AI 4o mini API" entity
   const aiModel = await ArtificialIntelligence.findOne({
     where: {
@@ -126,6 +127,16 @@ async function saveResponseToDatabase(articleId, aiResponse) {
     recordsToCreate.push(record);
   }
 
+  // Step 4b: Add scrapingStatus record
+  recordsToCreate.push({
+    articleId: parseInt(articleId),
+    entityWhoCategorizesId: entityWhoCategorizesId,
+    key: "scrapingStatus",
+    valueString: scrapingStatus,
+    valueNumber: null,
+    valueBoolean: null,
+  });
+
   // Bulk create all records
   const createdRecords = await ArticleEntityWhoCategorizedArticleContracts02.bulkCreate(
     recordsToCreate
@@ -158,10 +169,16 @@ router.post("/:articleId", async (req, res) => {
       });
     }
 
-    const { title, description } = article;
+    const { title, description, url } = article;
     console.log(`Article found: ${title}`);
 
-    // Step 2: Read the template file
+    // Step 2: Scrape article content from URL
+    console.log(`Attempting to scrape content from: ${url}`);
+    const scrapedContent = await scrapeArticle(url);
+    const scrapingStatus = scrapedContent ? "success" : "fail";
+    console.log(`Scraping status: ${scrapingStatus}`);
+
+    // Step 3: Read the template file
     const templatePath = path.join(
       __dirname,
       "../../templates/prompt-markdown/prompt02.md"
@@ -179,12 +196,27 @@ router.post("/:articleId", async (req, res) => {
       });
     }
 
-    // Step 3: Replace placeholders in template
-    const prompt = promptTemplate
+    // Step 4: Replace placeholders in template and handle scraped content
+    let prompt = promptTemplate
       .replace(/<< ARTICLE_TITLE >>/g, title || "")
       .replace(/<< ARTICLE_DESCRIPTION >>/g, description || "");
 
-    // Step 4: Call OpenAI API
+    // Conditionally handle scraped content
+    if (scrapedContent) {
+      // Replace placeholder with scraped content
+      prompt = prompt.replace(
+        /<< ARTICLE_SCRAPED_CONTENT >>/g,
+        scrapedContent
+      );
+    } else {
+      // Remove the entire "### Article Content" section if scraping failed
+      prompt = prompt.replace(
+        /### Article Content\s*\n\s*<< ARTICLE_SCRAPED_CONTENT >>\s*/g,
+        ""
+      );
+    }
+
+    // Step 5: Call OpenAI API
     const openAiApiKey = process.env.KEY_OPEN_AI;
     if (!openAiApiKey) {
       return res.status(500).json({
@@ -232,10 +264,14 @@ router.post("/:articleId", async (req, res) => {
       });
     }
 
-    // Step 5: Save response to database (critical path)
+    // Step 6: Save response to database (critical path)
     let dbSaveResult;
     try {
-      dbSaveResult = await saveResponseToDatabase(articleId, aiResponse);
+      dbSaveResult = await saveResponseToDatabase(
+        articleId,
+        aiResponse,
+        scrapingStatus
+      );
       console.log(
         `Database save successful: ${dbSaveResult.createdCount} records created`
       );
@@ -250,14 +286,19 @@ router.post("/:articleId", async (req, res) => {
       });
     }
 
-    // Step 6: Save response to file (optional/precautionary)
+    // Step 7: Save response to file (optional/precautionary)
     const fileSaveResult = await saveResponseToFile(articleId, aiResponse);
 
-    // Step 7: Return response
+    // Step 8: Return response
     res.status(200).json({
       result: true,
-      message: "Successfully processed article with OpenAI and saved to database",
+      message:
+        "Successfully processed article with OpenAI and saved to database",
       aiResponse: aiResponse,
+      scraping: {
+        status: scrapingStatus,
+        contentLength: scrapedContent ? scrapedContent.length : 0,
+      },
       database: {
         saved: true,
         deletedCount: dbSaveResult.deletedCount,
@@ -275,6 +316,71 @@ router.post("/:articleId", async (req, res) => {
       result: false,
       message: "Internal server error",
       error: error.message,
+    });
+  }
+});
+
+// 🔹 POST /analysis/llm01/scrape/:articleId (Test endpoint)
+router.post("/scrape/:articleId", async (req, res) => {
+  console.log(`- in POST /analysis/llm01/scrape/:articleId`);
+
+  try {
+    const { articleId } = req.params;
+    console.log(`articleId: ${articleId}`);
+
+    // Step 1: Get article from database
+    const article = await Article.findByPk(articleId);
+
+    if (!article) {
+      return res.status(404).json({
+        result: false,
+        message: `Article not found with ID: ${articleId}`,
+      });
+    }
+
+    const { url, title } = article;
+    console.log(`Testing scrape for article: ${title}`);
+    console.log(`URL: ${url}`);
+
+    // Step 2: Attempt to scrape
+    const startTime = Date.now();
+    let scrapedContent = null;
+    let error = null;
+
+    try {
+      scrapedContent = await scrapeArticle(url);
+    } catch (err) {
+      error = {
+        message: err.message,
+        stack: err.stack,
+      };
+    }
+
+    const duration = Date.now() - startTime;
+
+    // Step 3: Return detailed results
+    res.status(200).json({
+      result: true,
+      article: {
+        id: articleId,
+        title: title,
+        url: url,
+      },
+      scraping: {
+        success: scrapedContent !== null,
+        duration: `${duration}ms`,
+        contentLength: scrapedContent ? scrapedContent.length : 0,
+        content: scrapedContent,
+        error: error,
+      },
+    });
+  } catch (error) {
+    console.error("Error in POST /analysis/llm01/scrape/:articleId:", error);
+    res.status(500).json({
+      result: false,
+      message: "Internal server error",
+      error: error.message,
+      stack: error.stack,
     });
   }
 });

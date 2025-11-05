@@ -640,7 +640,7 @@ router.post("/with-ratings", authenticateToken, async (req, res) => {
 		if (
 			returnOnlyIsNotApproved &&
 			article.ArticleApproveds &&
-			article.ArticleApproveds.length > 0
+			article.ArticleApproveds.some((entry) => entry.isApproved === true || entry.isApproved === 1)
 		) {
 			return false;
 		}
@@ -737,7 +737,7 @@ router.post("/with-ratings", authenticateToken, async (req, res) => {
 		}
 		const isApproved =
 			article.ArticleApproveds &&
-			article.ArticleApproveds.some((entry) => entry.userId !== null);
+			article.ArticleApproveds.some((entry) => entry.isApproved === true || entry.isApproved === 1);
 
 		let requestQueryString = "";
 		if (article.NewsApiRequest?.andString)

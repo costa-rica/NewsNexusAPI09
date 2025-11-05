@@ -222,7 +222,7 @@ router.get("/approved", authenticateToken, async (req, res) => {
 	);
 
 	const approvedArticlesArray = articlesArray.filter(
-		(article) => article.ArticleApproveds?.length > 0
+		(article) => article.ArticleApproveds?.some((entry) => entry.isApproved === true || entry.isApproved === 1)
 	);
 
 	const approvedArticlesArrayModified = approvedArticlesArray.map((article) => {

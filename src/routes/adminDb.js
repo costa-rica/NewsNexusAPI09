@@ -24,6 +24,7 @@ const {
   NewsApiRequestWebsiteDomainContract,
   WebsiteDomain,
   ArticleEntityWhoCategorizedArticleContract,
+  ArticleEntityWhoCategorizedArticleContracts02,
 } = require("newsnexusdb09");
 
 const models = {
@@ -50,6 +51,7 @@ const models = {
   NewsApiRequestWebsiteDomainContract,
   WebsiteDomain,
   ArticleEntityWhoCategorizedArticleContract,
+  ArticleEntityWhoCategorizedArticleContracts02,
 };
 
 const fs = require("fs");
@@ -201,7 +203,7 @@ router.get("/db-row-counts-by-table", authenticateToken, async (req, res) => {
 
     for (const tableName in models) {
       if (models.hasOwnProperty(tableName)) {
-        // console.log(`Checking table: ${tableName}`);
+        console.log(`Checking table: ${tableName}`);
 
         // Count rows in the table
         const rowCount = await models[tableName].count();

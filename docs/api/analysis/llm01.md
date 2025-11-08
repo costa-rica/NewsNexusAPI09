@@ -10,7 +10,7 @@ All LLM analysis endpoints are prefixed with `/analysis/llm01` and use OpenAI's 
 
 Analyzes a news article using OpenAI's GPT-4o-mini model to determine if it describes consumer product safety hazards in the United States. The endpoint scrapes article content from the URL, applies a prompt template with the scraped content, sends it to OpenAI, saves the parsed response to the database, and optionally saves the raw response to a JSON file.
 
-**Authentication:** Not required
+**Authentication:** Required (JWT token)
 
 **URL Parameters:**
 
@@ -131,6 +131,22 @@ This endpoint performs comprehensive AI-powered analysis of news articles to ide
     "filePath": "/Users/nick/Documents/_project_resources/NewsNexus09/llm-01/responses/1234_2025-11-03T14-30-45-123Z.json",
     "error": null
   }
+}
+```
+
+**Response (401 Unauthorized - Missing Token):**
+
+```json
+{
+  "message": "Token is required"
+}
+```
+
+**Response (403 Forbidden - Invalid Token):**
+
+```json
+{
+  "message": "Invalid token"
 }
 ```
 
@@ -267,7 +283,8 @@ The endpoint parses the AI response and stores it in the `ArticleEntityWhoCatego
 **Example:**
 
 ```bash
-curl -X POST http://localhost:8001/analysis/llm01/1234
+curl -X POST http://localhost:8001/analysis/llm01/1234 \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN"
 ```
 
 **Web Scraping Details:**
@@ -286,7 +303,7 @@ curl -X POST http://localhost:8001/analysis/llm01/1234
 - Template file location: `src/templates/prompt-markdown/prompt02.md`
 - Scraping is optional - analysis proceeds with or without scraped content
 - File saving is optional/precautionary - database storage is the primary persistence mechanism
-- No authentication required - useful for testing and automation
+- Authentication required - provide valid JWT token in Authorization header
 - Timestamp in filename uses ISO 8601 format with colons and periods replaced by hyphens for filesystem compatibility
 
 **Error Handling Behavior:**
@@ -323,7 +340,7 @@ POST /artificial-intelligence/add-entity
 
 Test endpoint for debugging web scraping functionality. Attempts to scrape content from an article's URL and returns detailed results including timing, content length, and error information.
 
-**Authentication:** Not required
+**Authentication:** Required (JWT token)
 
 **URL Parameters:**
 
@@ -384,6 +401,22 @@ This is a diagnostic endpoint designed to help debug scraping issues. It perform
 }
 ```
 
+**Response (401 Unauthorized - Missing Token):**
+
+```json
+{
+  "message": "Token is required"
+}
+```
+
+**Response (403 Forbidden - Invalid Token):**
+
+```json
+{
+  "message": "Invalid token"
+}
+```
+
 **Response (404 Not Found):**
 
 ```json
@@ -407,7 +440,8 @@ This is a diagnostic endpoint designed to help debug scraping issues. It perform
 **Example:**
 
 ```bash
-curl -X POST http://localhost:8001/analysis/llm01/scrape/128175
+curl -X POST http://localhost:8001/analysis/llm01/scrape/128175 \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN"
 ```
 
 **Use Cases:**

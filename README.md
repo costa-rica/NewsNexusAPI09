@@ -13,7 +13,7 @@ npm install
 ## Documentation
 
 - [News Nexus 09 Overview](./docs/NEWS_NEXUS_09.md)
-- [API Reference - News Nexus API 09](./docs/API_REFERENCE_API_09.md)
+- [API Reference - News Nexus API 09](./docs/API_REFERENCE_09.md)
 - [Database documentation](./docs/DATABASE_OVERVIEW.md)
 - [API Reference - News Nexus Python Queuer 01](./docs/API_REFERENCE_PYTHON_QUEUER_01.md)
 

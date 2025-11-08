@@ -1,14 +1,11 @@
-# API Reference - News Nexus API 09
-
-This document provides comprehensive documentation for API endpoints in the News Nexus API 09 service.
-
-- LLM Analysis Endpoints are stored in `docs/API_REFERENCE_API_09_LLM_ANALYSIS.md`
-
-## Deduper Endpoints
+# Deduper Endpoints
 
 All deduper endpoints are prefixed with `/deduper` and require JWT authentication.
 
-### POST /analysis/deduper/report-checker-table
+- router file: src/routes/analysis/deduper.ts
+- url prefix: /analysis/deduper
+
+## POST /analysis/deduper/report-checker-table
 
 Analyzes articles in a report to identify duplicates across all approved articles. Creates a comprehensive duplicate analysis dictionary and generates an Excel spreadsheet report.
 
@@ -145,7 +142,7 @@ curl -X POST http://localhost:8001/analysis/deduper/report-checker-table \
 
 ---
 
-### GET /analysis/deduper/request-job/:reportId
+## GET /analysis/deduper/request-job/:reportId
 
 Initiates a deduper job in NewsNexusPythonQueuer to analyze articles for duplicates associated with a specific report.
 
@@ -250,7 +247,7 @@ curl -X GET http://localhost:8001/deduper/request-job/123 \
 
 ---
 
-### GET /analysis/deduper/job-list-status
+## GET /analysis/deduper/job-list-status
 
 Retrieves the status of all deduper jobs by relaying the request to the NewsNexusPythonQueuer service.
 
@@ -355,7 +352,7 @@ curl -X GET http://localhost:8001/analysis/deduper/job-list-status \
 
 ---
 
-### DELETE /analysis/deduper/clear-article-duplicate-analyses-table
+## DELETE /analysis/deduper/clear-article-duplicate-analyses-table
 
 Clears the ArticleDuplicateAnalysis table by sending a request to the NewsNexusPythonQueuer service. This operation cancels all running/pending deduper jobs and removes all duplicate analysis data from the database.
 
@@ -465,7 +462,7 @@ curl -X DELETE http://localhost:8001/analysis/deduper/clear-article-duplicate-an
 
 ---
 
-### GET /analysis/deduper/article-duplicate-analyses-status
+## GET /analysis/deduper/article-duplicate-analyses-status
 
 Checks the population status of the ArticleDuplicateAnalysis table to determine if deduper analysis data is available.
 

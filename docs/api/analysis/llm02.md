@@ -362,3 +362,309 @@ POST /artificial-intelligence/add-entity
 - `POST /analysis/llm01/:articleId` - Example of endpoint that uses entity IDs
 
 ---
+
+### POST /analysis/llm02/update-approved-status
+
+Updates the approval status of an article based on AI service analysis. Creates records in ArticleApproveds, ArticleStateContracts (if approved), and ArticleEntityWhoCategorizedArticleContracts02 tables to track the analysis results and approval decision.
+
+**Authentication:** Required (JWT token)
+
+**URL Parameters:** None
+
+**Request Body:**
+
+```json
+{
+  "articleId": 12345,
+  "isApproved": true,
+  "entityWhoCategorizesId": 42,
+  "llmAnalysis": {
+    "product": "electric scooter",
+    "state": "California",
+    "hazard": "fire",
+    "relevance_score": 9,
+    "united_states_score": 10,
+    "llmName": "Ollama"
+  },
+  "articleApprovedTextForPdfReport": "Electric scooter recall due to fire hazard in California",
+  "stateId": 5
+}
+```
+
+**Request Body Fields:**
+
+| Field                           | Type    | Required | Description                                                  |
+| ------------------------------- | ------- | -------- | ------------------------------------------------------------ |
+| articleId                       | number  | Yes      | ID of the article being approved/rejected                    |
+| isApproved                      | boolean | Yes      | Whether the article is approved (true) or rejected (false)   |
+| entityWhoCategorizesId          | number  | Yes      | Entity ID from service-login endpoint                        |
+| llmAnalysis                     | object  | Yes      | Analysis results from LLM (see structure below)              |
+| articleApprovedTextForPdfReport | string  | No       | Text to include in PDF reports (can be null)                 |
+| stateId                         | number  | No       | State ID if article relates to a specific US state (required if isApproved=true) |
+
+**llmAnalysis Structure (Success Case):**
+
+```json
+{
+  "product": "string - Product name or 'No product mentioned'",
+  "state": "string - State name or 'No state mentioned'",
+  "hazard": "string - Hazard type or 'No hazard mentioned'",
+  "relevance_score": "number - 0-10 relevance to consumer safety",
+  "united_states_score": "number - 0-10 confidence event is in US",
+  "llmName": "string - LLM provider name (e.g., 'Ollama', 'OpenAI')"
+}
+```
+
+**llmAnalysis Structure (Failed Case):**
+
+```json
+{
+  "llmResponse": "failed",
+  "llmName": "Ollama"
+}
+```
+
+**Description:**
+
+This endpoint processes article analysis results from AI services and updates the database accordingly. It performs validation checks, creates approval records, links articles to states (if approved), and stores detailed analysis results in a structured format.
+
+**Process Flow:**
+
+1. Validates required fields in request body
+2. Checks if article already exists in ArticleApproveds table
+   - If exists: Returns skip response with existing approval status
+   - If not: Continues processing
+3. Validates approval requirements:
+   - If `isApproved=true`, requires `stateId` to be provided
+   - If `isApproved=true` but `stateId` is missing: Returns error, skips all database operations
+4. Creates ArticleApproveds record with userId from JWT token
+5. Creates ArticleStateContracts record (only if `isApproved=true` AND `stateId` provided)
+6. Deletes existing ArticleEntityWhoCategorizedArticleContracts02 records for this article/entity
+7. Creates new ArticleEntityWhoCategorizedArticleContracts02 records based on llmAnalysis:
+   - Success case: Stores all analysis fields (product, state, hazard, scores) plus metadata
+   - Failed case: Stores only llmResponse="failed" and llmName
+
+**Response (200 OK - Success):**
+
+```json
+{
+  "result": true,
+  "message": "Article approval status updated successfully",
+  "articleId": 12345,
+  "title": "Electric Scooter Recall Announced",
+  "isApproved": true,
+  "articleApproved": {
+    "id": 789,
+    "created": true
+  },
+  "articleStateContract": {
+    "id": 456,
+    "created": true
+  },
+  "llmAnalysisRecords": {
+    "deletedCount": 0,
+    "createdCount": 7
+  }
+}
+```
+
+**Response (200 OK - Already Exists / Skipped):**
+
+```json
+{
+  "result": false,
+  "skipped": true,
+  "message": "Article already in ArticleApproveds table",
+  "articleId": 12345,
+  "title": "Electric Scooter Recall Announced",
+  "existingIsApproved": true
+}
+```
+
+**Response (400 Bad Request - Missing Required Fields):**
+
+```json
+{
+  "result": false,
+  "message": "Missing required fields: articleId, isApproved, entityWhoCategorizesId, llmAnalysis"
+}
+```
+
+**Response (400 Bad Request - Missing stateId for Approval):**
+
+```json
+{
+  "result": false,
+  "skipped": true,
+  "message": "Cannot approve article without stateId. Both isApproved=true and stateId are required for approval.",
+  "articleId": 12345
+}
+```
+
+**Response (401 Unauthorized - Missing Token):**
+
+```json
+{
+  "message": "Token is required"
+}
+```
+
+**Response (403 Forbidden - Invalid Token):**
+
+```json
+{
+  "message": "Invalid token"
+}
+```
+
+**Response (404 Not Found - Article Not Found):**
+
+```json
+{
+  "result": false,
+  "message": "Article not found with ID: 12345"
+}
+```
+
+**Response (500 Internal Server Error):**
+
+```json
+{
+  "result": false,
+  "message": "Internal server error",
+  "error": "Error description"
+}
+```
+
+**Example (Approve Article):**
+
+```bash
+curl -X POST http://localhost:8001/analysis/llm02/update-approved-status \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "articleId": 12345,
+    "isApproved": true,
+    "entityWhoCategorizesId": 42,
+    "llmAnalysis": {
+      "product": "electric scooter",
+      "state": "California",
+      "hazard": "fire",
+      "relevance_score": 9,
+      "united_states_score": 10,
+      "llmName": "Ollama"
+    },
+    "articleApprovedTextForPdfReport": "Electric scooter recall due to fire hazard",
+    "stateId": 5
+  }'
+```
+
+**Example (Reject Article - LLM Failed):**
+
+```bash
+curl -X POST http://localhost:8001/analysis/llm02/update-approved-status \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "articleId": 12346,
+    "isApproved": false,
+    "entityWhoCategorizesId": 42,
+    "llmAnalysis": {
+      "llmResponse": "failed",
+      "llmName": "Ollama"
+    },
+    "articleApprovedTextForPdfReport": null,
+    "stateId": null
+  }'
+```
+
+**Database Tables Updated:**
+
+| Table                                          | When Created                                    | Purpose                                  |
+| ---------------------------------------------- | ----------------------------------------------- | ---------------------------------------- |
+| ArticleApproveds                               | Always (if not duplicate)                       | Tracks article approval status           |
+| ArticleStateContracts                          | Only if isApproved=true AND stateId provided    | Links approved articles to states        |
+| ArticleEntityWhoCategorizedArticleContracts02  | Always (if not duplicate)                       | Stores detailed LLM analysis results     |
+
+**ArticleEntityWhoCategorizedArticleContracts02 Records Created:**
+
+For successful LLM analysis:
+- `llmResponse` → "success" (valueString)
+- `llmName` → provider name (valueString)
+- `product` → value (valueString)
+- `state` → value (valueString)
+- `hazard` → value (valueString)
+- `relevance_score` → value (valueNumber)
+- `united_states_score` → value (valueNumber)
+
+For failed LLM analysis:
+- `llmResponse` → "failed" (valueString)
+- `llmName` → provider name (valueString)
+
+**Validation Rules:**
+
+1. **Duplicate Prevention**: Articles already in ArticleApproveds table are skipped
+2. **Approval Requirements**: isApproved=true requires stateId to be provided
+3. **Missing stateId**: If isApproved=true but stateId is null, entire process is skipped
+4. **Failed LLM**: When llmResponse="failed", only metadata records are created
+
+**Integration Example:**
+
+AI services typically use this endpoint after analyzing an article:
+
+```javascript
+// After getting entityWhoCategorizesId from service-login
+const analysisResult = await analyzArticleWithLLM(article);
+
+// Determine approval based on scores
+const isApproved = analysisResult.relevance_score >= 7 &&
+                   analysisResult.united_states_score >= 7;
+
+// Get stateId if a state was identified
+const stateId = analysisResult.state !== "No state mentioned"
+  ? await lookupStateId(analysisResult.state)
+  : null;
+
+// Update article approval status
+const response = await fetch('http://localhost:8001/analysis/llm02/update-approved-status', {
+  method: 'POST',
+  headers: {
+    'Authorization': `Bearer ${token}`,
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({
+    articleId: article.id,
+    isApproved: isApproved,
+    entityWhoCategorizesId: entityId,
+    llmAnalysis: {
+      ...analysisResult,
+      llmName: process.env.LLM_PROVIDER || "Ollama"
+    },
+    articleApprovedTextForPdfReport: isApproved ? generateReportText(article) : null,
+    stateId: stateId
+  })
+});
+```
+
+**Notes:**
+
+- The `userId` field in ArticleApproveds is automatically populated from the JWT token
+- Duplicate approvals are prevented - each article can only have one approval record
+- If isApproved=true, both approval and stateId are mandatory
+- Existing ArticleEntityWhoCategorizedArticleContracts02 records for the same article/entity are deleted before creating new ones
+- The llmName field identifies which LLM provider performed the analysis
+- Failed LLM responses still create tracking records but with minimal data
+- Authentication required to track which user/service approved each article
+
+**Related Files:**
+
+- Route Implementation: `src/routes/analysis/llm02.js`
+- Related Tables: ArticleApproveds, ArticleStateContracts, ArticleEntityWhoCategorizedArticleContracts02
+
+**Related Endpoints:**
+
+- `POST /analysis/llm02/service-login` - Get entityWhoCategorizesId before using this endpoint
+- `GET /analysis/llm02/no-article-approved-rows` - Get articles that need approval
+- `POST /analysis/llm01/:articleId` - Alternative analysis endpoint
+
+---

@@ -10,6 +10,7 @@ const axios = require("axios");
 const fs = require("fs").promises;
 const path = require("path");
 const { scrapeArticle } = require("../../modules/analysis/scraper");
+const { authenticateToken } = require("../../modules/userAuthentication");
 
 /**
  * Helper function to save AI response to file (optional/precautionary)
@@ -152,7 +153,7 @@ async function saveResponseToDatabase(articleId, aiResponse, scrapingStatus) {
 }
 
 // 🔹 POST /analysis/llm01/:articleId
-router.post("/:articleId", async (req, res) => {
+router.post("/:articleId", authenticateToken, async (req, res) => {
   console.log(`- in POST /analysis/llm01/:articleId`);
 
   try {
@@ -321,7 +322,7 @@ router.post("/:articleId", async (req, res) => {
 });
 
 // 🔹 POST /analysis/llm01/scrape/:articleId (Test endpoint)
-router.post("/scrape/:articleId", async (req, res) => {
+router.post("/scrape/:articleId", authenticateToken, async (req, res) => {
   console.log(`- in POST /analysis/llm01/scrape/:articleId`);
 
   try {

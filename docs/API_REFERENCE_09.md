@@ -4,5 +4,5 @@ This document provides comprehensive documentation for API endpoints in the News
 
 ## Analysis & Intelligence
 
-- [Deduplication](./api/analysis/deduper.md)
-- [LLM Analysis with ChatGPT](./api/analysis/llm01.md)
+- [/analysis/deduper](./api/analysis/deduper.md) : Deduplicate articles
+- [/analysis/llm01](./api/analysis/llm01.md) : LLM Analysis with ChatGPT

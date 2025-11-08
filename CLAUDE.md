@@ -70,6 +70,13 @@ Required `.env` file with these key variables:
 - Admin users can be created automatically on startup
 - bcrypt for password hashing
 
+### API Documentation
+- **Main Index**: `docs/API_REFERENCE_09.md` - Links to all router documentation
+- **Detailed Docs**: `docs/api/{router}.md` or `docs/api/{category}/{router}.md` - Mirrors the `src/routes/` directory structure
+- Each router file documents all endpoints within that router (e.g., `src/routes/analysis/llm01.js` → `docs/api/analysis/llm01.md`)
+- When adding or modifying routes, update both the detailed router documentation and the main index
+- Documentation includes authentication requirements, request/response examples, error codes, and usage notes
+
 ## External Dependencies
 
 ### NewsNexusDb09 Package

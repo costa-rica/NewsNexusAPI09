@@ -177,3 +177,188 @@ for (const article of articles.slice(0, 100)) {
 - `GET /articles/approved` - Get approved articles
 
 ---
+
+### POST /analysis/llm02/service-login
+
+Retrieves the EntityWhoCategorizedArticle ID associated with an AI service by looking up the service name in the ArtificialIntelligence table. This endpoint is used by external AI services to register themselves and obtain their categorizer entity ID for tracking their analysis work.
+
+**Authentication:** Required (JWT token)
+
+**URL Parameters:** None
+
+**Request Body:**
+
+```json
+{
+  "name": "Service Name from NAME_APP env variable"
+}
+```
+
+**Request Body Fields:**
+
+| Field | Type   | Required | Description                                          |
+| ----- | ------ | -------- | ---------------------------------------------------- |
+| name  | string | Yes      | Name of the AI service (from NAME_APP env variable) |
+
+**Description:**
+
+This endpoint allows AI services to authenticate and retrieve their associated EntityWhoCategorizedArticle ID. The service sends its NAME_APP value (from its environment configuration), and the API looks up this name in the ArtificialIntelligence table, retrieves the associated EntityWhoCategorizedArticle through the database relationship, and returns the entity ID. This ID is then used by the service to tag articles it processes.
+
+**Use Cases:**
+
+1. **Service Initialization**: AI services call this on startup to get their entity ID
+2. **Service Registration**: Verify that the service exists in the database
+3. **Identity Management**: Services use the returned ID to tag their analysis work
+4. **Audit Trail**: Track which AI service processed which articles
+
+**Response (200 OK - Success):**
+
+```json
+{
+  "result": true,
+  "name": "Open AI 4o mini API",
+  "entityWhoCategorizesId": 42
+}
+```
+
+**Response (400 Bad Request - Missing Name):**
+
+```json
+{
+  "result": false,
+  "message": "Missing required field: name"
+}
+```
+
+**Response (401 Unauthorized - Missing Token):**
+
+```json
+{
+  "message": "Token is required"
+}
+```
+
+**Response (403 Forbidden - Invalid Token):**
+
+```json
+{
+  "message": "Invalid token"
+}
+```
+
+**Response (404 Not Found - AI Entity Not Found):**
+
+```json
+{
+  "result": false,
+  "message": "AI entity with name \"My Service Name\" not found in database"
+}
+```
+
+**Response (404 Not Found - No Associated Entity):**
+
+```json
+{
+  "result": false,
+  "message": "No EntityWhoCategorizedArticle associated with AI entity \"My Service Name\""
+}
+```
+
+**Response (500 Internal Server Error):**
+
+```json
+{
+  "result": false,
+  "message": "Internal server error",
+  "error": "Error description"
+}
+```
+
+**Example:**
+
+```bash
+curl -X POST http://localhost:8001/analysis/llm02/service-login \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"name": "Open AI 4o mini API"}'
+```
+
+**Response Fields:**
+
+| Field                   | Type   | Description                                    |
+| ----------------------- | ------ | ---------------------------------------------- |
+| result                  | boolean| Success status of the operation                |
+| name                    | string | Confirmed name of the AI entity from database  |
+| entityWhoCategorizesId  | number | The ID to use when categorizing articles       |
+
+**Database Relationship:**
+
+The endpoint queries the following relationship:
+
+```
+ArtificialIntelligence (name)
+  → EntityWhoCategorizedArticle (id)
+```
+
+**Integration Example:**
+
+AI services typically use this endpoint during initialization:
+
+```javascript
+// Service startup - get entity ID
+const serviceName = process.env.NAME_APP; // e.g., "Open AI 4o mini API"
+
+const response = await fetch('http://localhost:8001/analysis/llm02/service-login', {
+  method: 'POST',
+  headers: {
+    'Authorization': `Bearer ${token}`,
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({ name: serviceName })
+});
+
+const { entityWhoCategorizesId } = await response.json();
+
+// Store entityWhoCategorizesId for use in article processing
+// This ID is used when saving analysis results to the database
+```
+
+**Prerequisites:**
+
+Before an AI service can use this endpoint, it must be registered in the database:
+
+1. Create an ArtificialIntelligence record with the service name
+2. Create an associated EntityWhoCategorizedArticle record
+3. Link them through the database relationship
+
+This can be done using:
+
+```bash
+POST /artificial-intelligence/add-entity
+{
+  "name": "My AI Service Name",
+  "description": "Description of the AI service",
+  "huggingFaceModelName": null,
+  "huggingFaceModelType": null
+}
+```
+
+**Notes:**
+
+- The `name` field must exactly match the name in the ArtificialIntelligence table (case-sensitive)
+- Each AI service should have a unique NAME_APP value in its .env file
+- The returned entityWhoCategorizesId is used to track which service analyzed which articles
+- Authentication is required to prevent unauthorized services from obtaining entity IDs
+- Services should cache the entityWhoCategorizesId after initial login to reduce API calls
+
+**Related Files:**
+
+- Route Implementation: `src/routes/analysis/llm02.js`
+- Related Endpoint: `POST /artificial-intelligence/add-entity`
+
+**Related Endpoints:**
+
+- `POST /artificial-intelligence/add-entity` - Register a new AI entity
+- `POST /analysis/llm01/:articleId` - Example of endpoint that uses entity IDs
+
+---

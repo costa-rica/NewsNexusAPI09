@@ -53,6 +53,7 @@ async function sqlQueryArticlesApproved() {
       aa."userId" AS "approvedByUserId"
     FROM "Articles" a
     INNER JOIN "ArticleApproveds" aa ON aa."articleId" = a.id
+    WHERE (aa."isApproved" = true OR aa."isApproved" = 1)
     ORDER BY a.id;
   `;
 

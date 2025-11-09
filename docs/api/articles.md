@@ -451,3 +451,242 @@ const pendingAcceptance = articlesArray.filter(
 - `POST /analysis/llm02/update-approved-status` - Update article approval status
 
 ---
+
+## POST /articles/approve/:articleId
+
+Approves or unapproves an article by creating or updating a record in the ArticleApproveds table. This endpoint maintains approval history by setting `isApproved=true` or `isApproved=false` rather than deleting records. Tracks which user performed each action via JWT token.
+
+**Authentication:** Required (JWT token)
+
+**URL Parameters:**
+
+| Parameter | Type   | Required | Description                      |
+| --------- | ------ | -------- | -------------------------------- |
+| articleId | number | Yes      | ID of the article to approve/unapprove |
+
+**Request Body:**
+
+```json
+{
+  "approvedStatus": "Approve",
+  "headlineForPdfReport": "Electric Scooter Recall Announced",
+  "publicationNameForPdfReport": "Consumer Safety News",
+  "publicationDateForPdfReport": "2025-11-07",
+  "textForPdfReport": "Electric scooter recall due to fire hazard",
+  "urlForPdfReport": "https://example.com/news/scooter-recall"
+}
+```
+
+**Request Body Fields:**
+
+| Field                         | Type   | Required | Description                                           |
+| ----------------------------- | ------ | -------- | ----------------------------------------------------- |
+| approvedStatus                | string | Yes      | "Approve" or "Un-approve"                             |
+| headlineForPdfReport          | string | No       | Headline to use in PDF reports                        |
+| publicationNameForPdfReport   | string | No       | Publication name for PDF reports                      |
+| publicationDateForPdfReport   | string | No       | Publication date for PDF reports                      |
+| textForPdfReport              | string | No       | Article text/summary for PDF reports                  |
+| urlForPdfReport               | string | No       | Article URL for PDF reports                           |
+
+**Description:**
+
+This endpoint manages article approval status with full history tracking. When approving or unapproving, it updates the ArticleApproveds table by setting the `isApproved` field and tracking which user performed the action. This approach maintains a complete audit trail of approval decisions.
+
+**Process Flow:**
+
+### Approve Action (`approvedStatus === "Approve"`):
+
+1. Checks if an ArticleApproveds record exists for this article
+2. **If record exists:**
+   - Updates record with `isApproved=true`
+   - Updates `userId` to current authenticated user
+   - Updates all provided PDF report fields
+3. **If no record exists:**
+   - Creates new record with `isApproved=true`
+   - Sets `userId` to current authenticated user
+   - Includes all provided PDF report fields
+
+### Un-approve Action (`approvedStatus === "Un-approve"`):
+
+1. Checks if an ArticleApproveds record exists for this article
+2. **If record exists:**
+   - Updates record with `isApproved=false`
+   - Updates `userId` to current authenticated user (tracks who unapproved)
+   - Maintains all other fields (preserves approval history)
+3. **If no record exists:**
+   - Logs warning that no record exists to unapprove
+   - No database operation performed
+
+**Response (200 OK - Approve):**
+
+```json
+{
+  "result": true,
+  "status": "articleId 12345 is approved"
+}
+```
+
+**Response (200 OK - Un-approve):**
+
+```json
+{
+  "result": true,
+  "status": "articleId 12345 is unapproved"
+}
+```
+
+**Response (401 Unauthorized - Missing Token):**
+
+```json
+{
+  "message": "Token is required"
+}
+```
+
+**Response (403 Forbidden - Invalid Token):**
+
+```json
+{
+  "message": "Invalid token"
+}
+```
+
+**Example (Approve Article):**
+
+```bash
+curl -X POST http://localhost:8001/articles/approve/12345 \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "approvedStatus": "Approve",
+    "headlineForPdfReport": "Electric Scooter Recall Announced",
+    "publicationNameForPdfReport": "Consumer Safety News",
+    "publicationDateForPdfReport": "2025-11-07",
+    "textForPdfReport": "Electric scooter recall due to fire hazard in California",
+    "urlForPdfReport": "https://example.com/news/scooter-recall"
+  }'
+```
+
+**Example (Un-approve Article):**
+
+```bash
+curl -X POST http://localhost:8001/articles/approve/12345 \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "approvedStatus": "Un-approve"
+  }'
+```
+
+**Database Behavior:**
+
+| Action     | Record Exists | Operation                                           | Fields Updated                          |
+| ---------- | ------------- | --------------------------------------------------- | --------------------------------------- |
+| Approve    | No            | Create new record                                   | isApproved=true, userId, all PDF fields |
+| Approve    | Yes           | Update existing record                              | isApproved=true, userId, all PDF fields |
+| Un-approve | Yes           | Update existing record (preserves history)          | isApproved=false, userId                |
+| Un-approve | No            | No operation (logs warning)                         | None                                    |
+
+**Important Workflow Changes:**
+
+- **No longer deletes records** when unapproving
+- **Maintains approval history** by keeping records with `isApproved=false`
+- **Tracks user actions** via `userId` field from JWT token
+- **Supports re-approval** by updating existing records back to `isApproved=true`
+
+**Approval History Tracking:**
+
+This endpoint now maintains a complete audit trail:
+
+1. Article initially approved by User A → Record created with `isApproved=true`, `userId=A`
+2. Article unapproved by User B → Record updated to `isApproved=false`, `userId=B`
+3. Article re-approved by User C → Record updated to `isApproved=true`, `userId=C`
+
+The `userId` field always reflects who performed the most recent action, and the `isApproved` field reflects the current approval state.
+
+**Console Logging:**
+
+The endpoint logs detailed information for debugging:
+
+- Approve (existing record): `"---- > updated existing record to approved for articleId 12345"`
+- Approve (new record): `"---- > created new approval record for articleId 12345"`
+- Un-approve (success): `"---- > updated record to unapproved for articleId 12345, userId: 5"`
+- Un-approve (no record): `"---- > no approval record exists for articleId 12345, cannot unapprove"`
+
+**Compatibility:**
+
+✅ **GET /articles/approved** - Still works correctly (filters for `isApproved=true` only)
+✅ **Portal Application** - Only displays approved articles (isApproved=true)
+✅ **Approval History** - Complete audit trail maintained in database
+✅ **User Tracking** - Know who approved/unapproved each article
+
+**Use Cases:**
+
+1. **Manual Review Approval**: User reviews article and approves it for inclusion in reports
+2. **Mistake Correction**: User can unapprove an article that was approved by mistake
+3. **Re-evaluation**: Article can be unapproved, reviewed again, and re-approved
+4. **Audit Trail**: Track complete history of approval decisions and which users made them
+
+**Integration Example:**
+
+Portal applications typically use this endpoint after manual article review:
+
+```javascript
+// Approve article after user review
+const approveArticle = async (articleId, articleData) => {
+  const response = await fetch(`http://localhost:8001/articles/approve/${articleId}`, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      approvedStatus: 'Approve',
+      headlineForPdfReport: articleData.title,
+      textForPdfReport: articleData.summary,
+      urlForPdfReport: articleData.url,
+      publicationNameForPdfReport: articleData.source,
+      publicationDateForPdfReport: articleData.publishedDate
+    })
+  });
+
+  return response.json();
+};
+
+// Unapprove article if needed
+const unapproveArticle = async (articleId) => {
+  const response = await fetch(`http://localhost:8001/articles/approve/${articleId}`, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      approvedStatus: 'Un-approve'
+    })
+  });
+
+  return response.json();
+};
+```
+
+**Important Notes:**
+
+- The `userId` field is automatically populated from the JWT token's authenticated user
+- All PDF report fields are optional when approving
+- When unapproving, only `isApproved` and `userId` are updated (other fields preserved)
+- The spread operator `...req.body` includes all provided fields in the approval record
+- Records are never deleted, only updated, ensuring complete approval history
+
+**Related Files:**
+
+- Route Implementation: `src/routes/articles.js:341-402`
+- Related Table: ArticleApproveds
+
+**Related Endpoints:**
+
+- `GET /articles/approved` - Get only approved articles (isApproved=true)
+- `POST /articles/update-approved` - Update approval text for reports
+- `POST /analysis/llm02/update-approved-status` - AI-based approval workflow
+
+---

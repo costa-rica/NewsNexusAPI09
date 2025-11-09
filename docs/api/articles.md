@@ -692,33 +692,33 @@ curl -X GET http://localhost:8001/articles/get-approved/12345 \
 
 | Field             | Type    | Description                                             |
 | ----------------- | ------- | ------------------------------------------------------- |
-| articleIsApproved | boolean | true if ANY ArticleApproveds record exists (⚠️ see warning) |
+| articleIsApproved | boolean | true only if ArticleApproveds record exists with isApproved=true |
 | article           | object  | Complete article data with States and ArticleIsRelevants |
 | content           | string  | Text prepared for PDF reports (textForPdfReport field)  |
 | States            | array   | Duplicate of article.States for convenience             |
 
-**⚠️ IMPORTANT WARNING - Approval Checking Logic:**
+**Approval Checking Logic:**
 
-This endpoint currently checks ONLY for the **existence** of an ArticleApproveds record, **NOT** the `isApproved` field value:
+This endpoint properly validates the approval status by checking both record existence and the `isApproved` field value:
 
 ```javascript
 const articleApproved = await ArticleApproved.findOne({
   where: { articleId }
 });
 
-if (!articleApproved) {
+// Check if record exists AND isApproved is true
+if (!articleApproved || (articleApproved.isApproved !== true && articleApproved.isApproved !== 1)) {
   return res.json({ articleIsApproved: false, article: {} });
 }
 
 res.json({ articleIsApproved: true, ... });
 ```
 
-**This means:**
-- ❌ Articles with `isApproved=false` will return `articleIsApproved=true`
-- ❌ Does NOT align with the new approval workflow
-- ❌ Inconsistent with `GET /articles/approved` which correctly filters for `isApproved=true`
-
-**Recommendation:** This endpoint should be updated to check `articleApproved.isApproved === true` instead of just checking for record existence.
+**This ensures:**
+- ✅ Articles with `isApproved=false` return `articleIsApproved=false`
+- ✅ Aligns with the new approval workflow
+- ✅ Consistent with `GET /articles/approved` endpoint behavior
+- ✅ Handles both boolean (`true`) and integer (`1`) representations
 
 **Use Cases:**
 

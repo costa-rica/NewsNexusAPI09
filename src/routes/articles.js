@@ -244,7 +244,7 @@ router.get("/approved", authenticateToken, async (req, res) => {
 });
 
 // 🔹 POST /articles/update-approved
-router.post("/update-approved", async (req, res) => {
+router.post("/update-approved", authenticateToken, async (req, res) => {
   const { articleId, contentToUpdate } = req.body;
   console.log(`articleId: ${articleId}`);
   console.log(`contentToUpdate: ${contentToUpdate}`);
@@ -355,31 +355,50 @@ router.post("/approve/:articleId", authenticateToken, async (req, res) => {
     where: { articleId },
   });
 
-  if (approvedStatus === "Approve" && !articleApprovedExists) {
-    await ArticleApproved.create({
-      articleId: articleId,
-      userId: user.id,
-      ...req.body,
-    });
+  if (approvedStatus === "Approve") {
+    if (articleApprovedExists) {
+      // Update existing record to approved
+      await ArticleApproved.update(
+        {
+          isApproved: true,
+          userId: user.id,
+          ...req.body,
+        },
+        { where: { articleId } }
+      );
+      console.log(`---- > updated existing record to approved for articleId ${articleId}`);
+    } else {
+      // Create new approval record
+      await ArticleApproved.create({
+        articleId: articleId,
+        userId: user.id,
+        isApproved: true,
+        ...req.body,
+      });
+      console.log(`---- > created new approval record for articleId ${articleId}`);
+    }
   } else if (approvedStatus === "Un-approve") {
-    console.log("---- > recieved Un-approve");
-    await ArticleApproved.destroy({
-      where: { articleId },
-    });
+    console.log("---- > received Un-approve");
+    if (articleApprovedExists) {
+      // Update existing record to unapproved instead of deleting
+      await ArticleApproved.update(
+        {
+          isApproved: false,
+          userId: user.id,
+        },
+        { where: { articleId } }
+      );
+      console.log(`---- > updated record to unapproved for articleId ${articleId}, userId: ${user.id}`);
+    } else {
+      console.log(`---- > no approval record exists for articleId ${articleId}, cannot unapprove`);
+    }
   }
-  // if (isApproved) {
-  //   await ArticleApproved.create({
-  //     articleId: articleId,
-  //     userId: user.id,
-  //     ...req.body,
-  //   });
-  // } else {
-  //   await ArticleApproved.destroy({
-  //     where: { articleId },
-  //   });
-  // }
 
-  res.json({ result: true, status: `articleId ${articleId} is approved` });
+  const statusMessage = approvedStatus === "Approve"
+    ? `articleId ${articleId} is approved`
+    : `articleId ${articleId} is unapproved`;
+
+  res.json({ result: true, status: statusMessage });
 });
 
 // 🔹 GET /articles/summary-statistics

@@ -452,6 +452,320 @@ const pendingAcceptance = articlesArray.filter(
 
 ---
 
+## POST /articles/user-toggle-is-not-relevant/:articleId
+
+Toggles the relevance status of an article by creating or deleting a record in the ArticleIsRelevant table. This endpoint uses a toggle pattern where the presence of a record indicates "NOT relevant" and absence indicates "relevant" (default state).
+
+**Authentication:** Required (JWT token)
+
+**URL Parameters:**
+
+| Parameter | Type   | Required | Description                           |
+| --------- | ------ | -------- | ------------------------------------- |
+| articleId | number | Yes      | ID of the article to toggle relevance |
+
+**Request Body:** None (empty)
+
+**Description:**
+
+This endpoint manages article relevance through a toggle mechanism. Articles are considered relevant by default (no record in ArticleIsRelevant table). When a user marks an article as "NOT relevant," a record is created with `isRelevant=false`. Toggling again removes the record, making the article relevant again.
+
+**Process Flow:**
+
+1. Checks if an ArticleIsRelevant record exists for this articleId
+2. **If record exists:**
+   - Deletes the record
+   - Article becomes relevant (returns to default state)
+   - Returns `articleIsRelevant=true`
+3. **If no record exists:**
+   - Creates new record with `isRelevant=false` and `userId` from JWT
+   - Article is marked as NOT relevant
+   - Returns `articleIsRelevant=false`
+
+**Response (200 OK - Marked as NOT Relevant):**
+
+```json
+{
+  "result": true,
+  "status": "articleId 12345 is marked as NOT relevant",
+  "articleIsRelevant": false
+}
+```
+
+**Response (200 OK - Made Relevant):**
+
+```json
+{
+  "result": true,
+  "status": "articleId 12345 is made relevant",
+  "articleIsRelevant": true
+}
+```
+
+**Response (401 Unauthorized - Missing Token):**
+
+```json
+{
+  "message": "Token is required"
+}
+```
+
+**Response (403 Forbidden - Invalid Token):**
+
+```json
+{
+  "message": "Invalid token"
+}
+```
+
+**Example (Toggle Relevance):**
+
+```bash
+curl -X POST http://localhost:8001/articles/user-toggle-is-not-relevant/12345 \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{}'
+```
+
+**Relevance State Logic:**
+
+| Current State | ArticleIsRelevant Record | Action           | New State       | Record After |
+| ------------- | ------------------------ | ---------------- | --------------- | ------------ |
+| Relevant      | No record                | Toggle           | NOT Relevant    | Record created with isRelevant=false |
+| NOT Relevant  | Record exists            | Toggle           | Relevant        | Record deleted |
+
+**Important Notes:**
+
+- **Default state is relevant**: Articles without a record in ArticleIsRelevant are considered relevant
+- **Inverse logic**: Record presence = NOT relevant, record absence = relevant
+- Tracks which user marked article as not relevant via `userId` field
+- Multiple toggles will alternate between relevant and NOT relevant states
+- Used by POST /articles endpoint's `returnOnlyIsRelevant` filter
+
+**Use Cases:**
+
+1. **Filtering Irrelevant Articles**: Users mark off-topic or spam articles as NOT relevant
+2. **Quality Control**: Remove low-quality articles from review workflows
+3. **Workflow Management**: Hide irrelevant articles from approval dashboards
+4. **User Preferences**: Allow users to customize which articles they see
+
+**Integration with Other Endpoints:**
+
+The relevance status affects these endpoints:
+
+- **POST /articles**: `returnOnlyIsRelevant=true` filters out articles marked as NOT relevant
+- Article objects include `ArticleIsRelevant` boolean field based on record presence
+
+**Integration Example:**
+
+```javascript
+// Toggle article relevance
+const toggleRelevance = async (articleId) => {
+  const response = await fetch(
+    `http://localhost:8001/articles/user-toggle-is-not-relevant/${articleId}`,
+    {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({})
+    }
+  );
+
+  const { articleIsRelevant, status } = await response.json();
+  console.log(status);
+
+  return articleIsRelevant;
+};
+```
+
+**Related Files:**
+
+- Route Implementation: `src/routes/articles.js:275-304`
+- Related Table: ArticleIsRelevant
+
+**Related Endpoints:**
+
+- `POST /articles` - Respects relevance filter
+- `GET /articles/approved` - Approved articles may still be marked as NOT relevant
+
+---
+
+## GET /articles/get-approved/:articleId
+
+Retrieves approval information for a specific article, including the article data, states, and PDF report content. Returns whether the article has any approval record in the ArticleApproveds table.
+
+**Authentication:** Required (JWT token)
+
+**URL Parameters:**
+
+| Parameter | Type   | Required | Description                          |
+| --------- | ------ | -------- | ------------------------------------ |
+| articleId | number | Yes      | ID of the article to get approval for |
+
+**Request Body:** None
+
+**Description:**
+
+This endpoint fetches detailed information about an article's approval status, including associated states, relevance markers, and the text prepared for PDF reports. It returns the complete article object with related data for display in approval workflows.
+
+**Process Flow:**
+
+1. Queries ArticleApproveds table for the articleId
+2. Includes related Article data with States and ArticleIsRelevant records
+3. **If no approval record exists:**
+   - Returns `articleIsApproved=false` with empty article object
+4. **If approval record exists:**
+   - Returns `articleIsApproved=true`
+   - Returns full article data
+   - Returns `textForPdfReport` content
+   - Returns associated States
+
+**Response (200 OK - Article Has Approval Record):**
+
+```json
+{
+  "articleIsApproved": true,
+  "article": {
+    "id": 12345,
+    "title": "Electric Scooter Recall Announced",
+    "description": "The CPSC announced a recall of electric scooters...",
+    "url": "https://example.com/news/scooter-recall",
+    "urlToImage": "https://example.com/images/scooter.jpg",
+    "publishedDate": "2025-11-07T14:30:00.000Z",
+    "createdAt": "2025-11-08T10:15:23.456Z",
+    "updatedAt": "2025-11-08T10:15:23.456Z",
+    "States": [
+      {
+        "id": 5,
+        "name": "California",
+        "abbreviation": "CA"
+      }
+    ],
+    "ArticleIsRelevants": []
+  },
+  "content": "Electric scooter recall due to fire hazard in California",
+  "States": [
+    {
+      "id": 5,
+      "name": "California",
+      "abbreviation": "CA"
+    }
+  ]
+}
+```
+
+**Response (200 OK - No Approval Record):**
+
+```json
+{
+  "articleIsApproved": false,
+  "article": {}
+}
+```
+
+**Response (401 Unauthorized - Missing Token):**
+
+```json
+{
+  "message": "Token is required"
+}
+```
+
+**Response (403 Forbidden - Invalid Token):**
+
+```json
+{
+  "message": "Invalid token"
+}
+```
+
+**Example:**
+
+```bash
+curl -X GET http://localhost:8001/articles/get-approved/12345 \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN"
+```
+
+**Response Fields:**
+
+| Field             | Type    | Description                                             |
+| ----------------- | ------- | ------------------------------------------------------- |
+| articleIsApproved | boolean | true if ANY ArticleApproveds record exists (⚠️ see warning) |
+| article           | object  | Complete article data with States and ArticleIsRelevants |
+| content           | string  | Text prepared for PDF reports (textForPdfReport field)  |
+| States            | array   | Duplicate of article.States for convenience             |
+
+**⚠️ IMPORTANT WARNING - Approval Checking Logic:**
+
+This endpoint currently checks ONLY for the **existence** of an ArticleApproveds record, **NOT** the `isApproved` field value:
+
+```javascript
+const articleApproved = await ArticleApproved.findOne({
+  where: { articleId }
+});
+
+if (!articleApproved) {
+  return res.json({ articleIsApproved: false, article: {} });
+}
+
+res.json({ articleIsApproved: true, ... });
+```
+
+**This means:**
+- ❌ Articles with `isApproved=false` will return `articleIsApproved=true`
+- ❌ Does NOT align with the new approval workflow
+- ❌ Inconsistent with `GET /articles/approved` which correctly filters for `isApproved=true`
+
+**Recommendation:** This endpoint should be updated to check `articleApproved.isApproved === true` instead of just checking for record existence.
+
+**Use Cases:**
+
+1. **Approval Status Check**: Quick lookup to see if article has been reviewed
+2. **Edit Approval**: Get current approval data for editing in Portal
+3. **Report Preview**: Display approved article with PDF report text
+4. **State Association**: View which states are associated with approved article
+
+**Integration Example:**
+
+```javascript
+// Get approval information for an article
+const getApprovalInfo = async (articleId) => {
+  const response = await fetch(
+    `http://localhost:8001/articles/get-approved/${articleId}`,
+    {
+      headers: { 'Authorization': `Bearer ${token}` }
+    }
+  );
+
+  const { articleIsApproved, article, content, States } = await response.json();
+
+  if (articleIsApproved) {
+    console.log('Article is approved');
+    console.log('PDF Report Text:', content);
+    console.log('States:', States.map(s => s.abbreviation).join(', '));
+  } else {
+    console.log('Article is not approved');
+  }
+
+  return { articleIsApproved, article, content, States };
+};
+```
+
+**Related Files:**
+
+- Route Implementation: `src/routes/articles.js:306-339`
+- Related Tables: ArticleApproveds, Articles, States, ArticleIsRelevant
+
+**Related Endpoints:**
+
+- `POST /articles/approve/:articleId` - Approve/unapprove articles
+- `GET /articles/approved` - Get all approved articles (filters by isApproved=true)
+- `POST /articles/update-approved` - Update PDF report text
+
+---
+
 ## POST /articles/approve/:articleId
 
 Approves or unapproves an article by creating or updating a record in the ArticleApproveds table. This endpoint maintains approval history by setting `isApproved=true` or `isApproved=false` rather than deleting records. Tracks which user performed each action via JWT token.
@@ -688,5 +1002,193 @@ const unapproveArticle = async (articleId) => {
 - `GET /articles/approved` - Get only approved articles (isApproved=true)
 - `POST /articles/update-approved` - Update approval text for reports
 - `POST /analysis/llm02/update-approved-status` - AI-based approval workflow
+
+---
+
+## GET /articles/summary-statistics
+
+Retrieves summary statistics about articles in the system, including total counts, articles with states, approved articles, and approved articles not yet submitted to reports. Provides dashboard metrics for monitoring the article processing workflow.
+
+**Authentication:** Required (JWT token)
+
+**URL Parameters:** None
+
+**Query Parameters:** None
+
+**Description:**
+
+This endpoint calculates and returns various statistics about the article database to provide insights into the workflow status. It includes counts of total articles, recent articles, articles with state associations, approved articles, and approved articles awaiting report submission.
+
+**Process Flow:**
+
+1. Queries all articles and counts total
+2. Calculates articles added since last Thursday at 8 PM EST
+3. Counts articles with associated states
+4. Counts approved articles (uses `sqlQueryArticlesApproved()`)
+5. Identifies approved articles not yet in any report
+6. Returns aggregated statistics
+
+**Response (200 OK):**
+
+```json
+{
+  "summaryStatistics": {
+    "articlesCount": 15423,
+    "articlesSinceLastThursday20hEst": 287,
+    "articleHasStateCount": 1234,
+    "articleIsApprovedCount": 456,
+    "approvedButNotInReportCount": 123
+  }
+}
+```
+
+**Response (401 Unauthorized - Missing Token):**
+
+```json
+{
+  "message": "Token is required"
+}
+```
+
+**Response (403 Forbidden - Invalid Token):**
+
+```json
+{
+  "message": "Invalid token"
+}
+```
+
+**Example:**
+
+```bash
+curl -X GET http://localhost:8001/articles/summary-statistics \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN"
+```
+
+**Response Fields:**
+
+| Field                         | Type   | Description                                                |
+| ----------------------------- | ------ | ---------------------------------------------------------- |
+| articlesCount                 | number | Total number of articles in the database                   |
+| articlesSinceLastThursday20hEst | number | Articles added since last Thursday at 8 PM Eastern Time  |
+| articleHasStateCount          | number | Unique articles with at least one state association        |
+| articleIsApprovedCount        | number | Unique articles with approval records (⚠️ see warning)     |
+| approvedButNotInReportCount   | number | Approved articles not yet submitted to any report          |
+
+**⚠️ IMPORTANT WARNING - Approval Counting Logic:**
+
+This endpoint uses `sqlQueryArticlesApproved()` which counts ALL articles with **ANY** ArticleApproveds record, **NOT** filtering by `isApproved=true`:
+
+```sql
+SELECT a.id AS "articleId", ...
+FROM "Articles" a
+INNER JOIN "ArticleApproveds" aa ON aa."articleId" = a.id
+-- Missing: WHERE aa."isApproved" = true
+```
+
+**This means:**
+- ❌ `articleIsApprovedCount` includes articles with `isApproved=false`
+- ❌ `approvedButNotInReportCount` may include unapproved articles
+- ❌ Does NOT align with the new approval workflow
+- ❌ Inconsistent with `GET /articles/approved` which correctly filters
+
+**Recommendation:** The `sqlQueryArticlesApproved()` function in `src/modules/queriesSql.js` should be updated to filter by `isApproved=true`:
+
+```sql
+SELECT a.id AS "articleId", ...
+FROM "Articles" a
+INNER JOIN "ArticleApproveds" aa ON aa."articleId" = a.id
+WHERE aa."isApproved" = true  -- Add this line
+```
+
+**Calculation Details:**
+
+### articlesCount
+- Simple count of all articles returned by `sqlQueryArticles({})`
+- Represents total articles in database
+
+### articlesSinceLastThursday20hEst
+- Filters articles where `createdAt >= lastThursday20hEst`
+- Uses `getLastThursdayAt20hInNyTimeZone()` helper function
+- Useful for weekly reporting cycles
+
+### articleHasStateCount
+- Counts unique articleIds from `sqlQueryArticlesWithStates()`
+- Only includes articles with at least one state association
+- Uses Set to deduplicate article IDs
+
+### articleIsApprovedCount
+- Counts unique articleIds from `sqlQueryArticlesApproved()`
+- **Currently counts ANY ArticleApproveds record** (needs fix)
+- Uses Set to deduplicate article IDs
+
+### approvedButNotInReportCount
+- Takes approved articles and filters out those in `ArticleReportContracts`
+- Counts articles that are approved but not yet submitted to reports
+- **May include unapproved articles** due to sqlQueryArticlesApproved issue
+
+**Use Cases:**
+
+1. **Dashboard Metrics**: Display key statistics on admin dashboard
+2. **Workflow Monitoring**: Track progress of article processing pipeline
+3. **Weekly Reports**: Monitor articles added since last reporting cycle
+4. **Quality Assurance**: Identify approved articles awaiting report submission
+5. **Capacity Planning**: Understand volume of articles being processed
+
+**Integration Example:**
+
+```javascript
+// Fetch summary statistics for dashboard
+const getSummaryStats = async () => {
+  const response = await fetch(
+    'http://localhost:8001/articles/summary-statistics',
+    {
+      headers: { 'Authorization': `Bearer ${token}` }
+    }
+  );
+
+  const { summaryStatistics } = await response.json();
+
+  // Display on dashboard
+  console.log(`Total Articles: ${summaryStatistics.articlesCount}`);
+  console.log(`This Week: ${summaryStatistics.articlesSinceLastThursday20hEst}`);
+  console.log(`With States: ${summaryStatistics.articleHasStateCount}`);
+  console.log(`Approved: ${summaryStatistics.articleIsApprovedCount}`);
+  console.log(`Pending Report: ${summaryStatistics.approvedButNotInReportCount}`);
+
+  return summaryStatistics;
+};
+```
+
+**Time Calculation Notes:**
+
+- **Last Thursday at 8 PM EST**: Uses `getLastThursdayAt20hInNyTimeZone()` helper
+- Aligns with weekly reporting cycle (Thursday 8 PM to Thursday 8 PM)
+- Handles timezone conversion to New York time
+- Uses Luxon library for date calculations
+
+**Performance Notes:**
+
+- Multiple database queries executed sequentially
+- Uses Set for efficient deduplication
+- No pagination - returns all counts
+- Typical response time: < 2 seconds for databases with 10,000+ articles
+
+**Related Files:**
+
+- Route Implementation: `src/routes/articles.js:404-463`
+- Query Functions: `src/modules/queriesSql.js`
+  - `sqlQueryArticles()`
+  - `sqlQueryArticlesWithStates()`
+  - `sqlQueryArticlesApproved()` (⚠️ needs isApproved filter)
+  - `sqlQueryArticlesReport()`
+- Helper Functions: `src/modules/common.js`
+  - `getLastThursdayAt20hInNyTimeZone()`
+
+**Related Endpoints:**
+
+- `POST /articles` - Get filtered articles list
+- `GET /articles/approved` - Get approved articles (correctly filters by isApproved=true)
+- `POST /articles/approve/:articleId` - Approve/unapprove articles
 
 ---

@@ -1072,34 +1072,27 @@ curl -X GET http://localhost:8001/articles/summary-statistics \
 | articlesCount                 | number | Total number of articles in the database                   |
 | articlesSinceLastThursday20hEst | number | Articles added since last Thursday at 8 PM Eastern Time  |
 | articleHasStateCount          | number | Unique articles with at least one state association        |
-| articleIsApprovedCount        | number | Unique articles with approval records (⚠️ see warning)     |
+| articleIsApprovedCount        | number | Unique articles with isApproved=true                       |
 | approvedButNotInReportCount   | number | Approved articles not yet submitted to any report          |
 
-**⚠️ IMPORTANT WARNING - Approval Counting Logic:**
+**Approval Counting Logic:**
 
-This endpoint uses `sqlQueryArticlesApproved()` which counts ALL articles with **ANY** ArticleApproveds record, **NOT** filtering by `isApproved=true`:
-
-```sql
-SELECT a.id AS "articleId", ...
-FROM "Articles" a
-INNER JOIN "ArticleApproveds" aa ON aa."articleId" = a.id
--- Missing: WHERE aa."isApproved" = true
-```
-
-**This means:**
-- ❌ `articleIsApprovedCount` includes articles with `isApproved=false`
-- ❌ `approvedButNotInReportCount` may include unapproved articles
-- ❌ Does NOT align with the new approval workflow
-- ❌ Inconsistent with `GET /articles/approved` which correctly filters
-
-**Recommendation:** The `sqlQueryArticlesApproved()` function in `src/modules/queriesSql.js` should be updated to filter by `isApproved=true`:
+This endpoint properly counts approved articles by using `sqlQueryArticlesApproved()` which filters by `isApproved=true`:
 
 ```sql
 SELECT a.id AS "articleId", ...
 FROM "Articles" a
 INNER JOIN "ArticleApproveds" aa ON aa."articleId" = a.id
-WHERE aa."isApproved" = true  -- Add this line
+WHERE (aa."isApproved" = true OR aa."isApproved" = 1)
+ORDER BY a.id;
 ```
+
+**This ensures:**
+- ✅ `articleIsApprovedCount` only includes articles with `isApproved=true`
+- ✅ `approvedButNotInReportCount` excludes unapproved articles
+- ✅ Aligns with the new approval workflow
+- ✅ Consistent with `GET /articles/approved` endpoint behavior
+- ✅ Handles both boolean (`true`) and integer (`1`) representations
 
 **Calculation Details:**
 
@@ -1119,13 +1112,13 @@ WHERE aa."isApproved" = true  -- Add this line
 
 ### articleIsApprovedCount
 - Counts unique articleIds from `sqlQueryArticlesApproved()`
-- **Currently counts ANY ArticleApproveds record** (needs fix)
+- Filters by `isApproved=true` to exclude unapproved articles
 - Uses Set to deduplicate article IDs
 
 ### approvedButNotInReportCount
 - Takes approved articles and filters out those in `ArticleReportContracts`
 - Counts articles that are approved but not yet submitted to reports
-- **May include unapproved articles** due to sqlQueryArticlesApproved issue
+- Properly excludes articles with `isApproved=false`
 
 **Use Cases:**
 
@@ -1180,7 +1173,7 @@ const getSummaryStats = async () => {
 - Query Functions: `src/modules/queriesSql.js`
   - `sqlQueryArticles()`
   - `sqlQueryArticlesWithStates()`
-  - `sqlQueryArticlesApproved()` (⚠️ needs isApproved filter)
+  - `sqlQueryArticlesApproved()` (filters by isApproved=true)
   - `sqlQueryArticlesReport()`
 - Helper Functions: `src/modules/common.js`
   - `getLastThursdayAt20hInNyTimeZone()`

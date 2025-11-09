@@ -323,7 +323,9 @@ router.get("/get-approved/:articleId", authenticateToken, async (req, res) => {
       },
     ],
   });
-  if (!articleApproved) {
+
+  // Check if record exists AND isApproved is true
+  if (!articleApproved || (articleApproved.isApproved !== true && articleApproved.isApproved !== 1)) {
     return res.json({
       articleIsApproved: false,
       article: {},
